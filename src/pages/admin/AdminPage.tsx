@@ -70,19 +70,33 @@ export const AdminPage: React.FC = () => {
   });
 
   const ingestMutation = useMutation({
-  mutationFn: triggerNewsIngestion,
-  onSuccess: (result) => {
-    queryClient.invalidateQueries({ queryKey: ['admin-drafts'] });
-    if (result.draftsCreated > 0) {
-      showNotification('success', `Fetched ${result.itemsFetched} items, created ${result.draftsCreated} new drafts.`);
-    } else {
-      showNotification('success', `Checked ${result.itemsFetched} items — nothing new (${result.skipped} already seen).`);
-    }
-  },
-  onError: (err: any) => {
-    showNotification('error', err.detail || 'Failed to run news ingestion.');
-  },
-});
+    mutationFn: triggerNewsIngestion,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-drafts'] });
+      if (result.draftsCreated > 0) {
+        showNotification('success', `Fetched ${result.itemsFetched} items, created ${result.draftsCreated} new drafts.`);
+      } else {
+        showNotification('success', `Checked ${result.itemsFetched} items — nothing new (${result.skipped} already seen).`);
+      }
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to run news ingestion.');
+    },
+  });
+
+  const sendNewsletterMutation = useMutation({
+    mutationFn: () => sendNewsletterNow(5),
+    onSuccess: (result) => {
+      if (result.recipientCount > 0) {
+        showNotification('success', `Sent to ${result.recipientCount} subscribers (${result.articleCount} articles).`);
+      } else {
+        showNotification('error', result.errors[0] || 'Nothing was sent.');
+      }
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to send newsletter.');
+    },
+  });
 
   // --- 3. Form States & Submissions ---
   // A. New Briefing Draft
@@ -336,24 +350,37 @@ export const AdminPage: React.FC = () => {
       {/* TAB 1: AI QUEUE / DRAFT LISTINGS */}
       {activeTab === 'queue' && (
         <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+          <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
             <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400">
               <Layers className="w-4 h-4" />
               Unpublished Draft Digest Review Queue
             </div>
-            <button
-              onClick={() => ingestMutation.mutate()}
-              disabled={ingestMutation.isPending}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-stone-900 hover:bg-stone-800 disabled:opacity-70 text-white text-xs font-bold py-2.5 px-3 rounded-lg shadow-sm cursor-pointer transition-colors whitespace-nowrap"
-              type="button"
-            >
-              {ingestMutation.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="w-3.5 h-3.5" />
-              )}
-              {ingestMutation.isPending ? 'Fetching...' : 'Fetch new articles now'}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => ingestMutation.mutate()}
+                disabled={ingestMutation.isPending}
+                className="flex items-center gap-1.5 bg-stone-900 hover:bg-stone-800 disabled:opacity-70 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm cursor-pointer transition-colors whitespace-nowrap"
+              >
+                {ingestMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                {ingestMutation.isPending ? 'Fetching...' : 'Fetch new articles now'}
+              </button>
+              <button
+                onClick={() => sendNewsletterMutation.mutate()}
+                disabled={sendNewsletterMutation.isPending}
+                className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-70 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm cursor-pointer transition-colors whitespace-nowrap"
+              >
+                {sendNewsletterMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Mail className="w-3.5 h-3.5" />
+                )}
+                {sendNewsletterMutation.isPending ? 'Sending...' : 'Send newsletter now'}
+              </button>
+            </div>
           </div>
 
           {isDraftsLoading ? (
