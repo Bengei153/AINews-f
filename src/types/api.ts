@@ -16,6 +16,7 @@ export interface Article {
   categoryName: string;
   readTimeMinutes: number;
   publishedOn: string;
+  coverImageUrl?: string | null;
 }
 
 export interface ArticleDetail extends Article {

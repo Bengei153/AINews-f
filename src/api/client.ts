@@ -17,6 +17,11 @@ export const VITE_API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || '
 export const isDemoMode = (): boolean => {
   return !VITE_API_BASE_URL || VITE_API_BASE_URL === 'mock';
 };
+// The backend's own root URL, without the /api suffix — used to build
+// links to non-API routes it also serves, like /share/articles/{slug}
+// (see ShareController on the backend). Derived rather than configured
+// separately, so it can never drift out of sync with VITE_API_BASE_URL.
+export const getApiRootUrl = (): string => VITE_API_BASE_URL.replace(/\/api\/?$/, '');
 
 // Access token and refresh token storage keys
 const ACCESS_TOKEN_KEY = 'aibrief_access_token';

@@ -9,8 +9,9 @@ import { useQuery } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import { getArticleBySlug } from '../api/articles';
 import { useAuth } from '../store/authStore';
-import { Clock, Bookmark, ArrowLeft, ExternalLink, Globe, BookOpen, AlertCircle } from 'lucide-react';
+import { Clock, Bookmark, ArrowLeft, ExternalLink, Globe, BookOpen, AlertCircle, Share2, CheckCircle2 } from 'lucide-react';
 import { ArticlePillar } from '../types/api';
+import { getApiRootUrl } from '../api/client';
 
 const PILLAR_LABELS: Record<ArticlePillar, string> = {
   AIForStudents: 'AI for Students',
@@ -34,6 +35,7 @@ export const ArticleDetailPage: React.FC = () => {
   });
 
   const isBookmarked = article ? bookmarks.some((b) => b.articleId === article.id) : false;
+  const [shareCopied, setShareCopied] = React.useState(false);
 
   const handleBookmarkToggle = async () => {
     if (!user) {
@@ -45,6 +47,32 @@ export const ArticleDetailPage: React.FC = () => {
       await toggleBookmark(article.id);
     } catch (err: any) {
       alert(err.detail || 'Failed to toggle bookmark.');
+    }
+  };
+
+  const handleShare = async () => {
+    if (!article) return;
+    // Points at the backend's /share/articles/{slug} route (not the
+    // frontend URL directly) — that route is what actually carries the
+    // og:image/og:title tags crawlers read, then redirects to this page.
+    const shareUrl = `${getApiRootUrl()}/share/articles/${article.slug}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: article.title, text: article.summary, url: shareUrl });
+        return;
+      } catch {
+        // User cancelled the native share sheet, or it's unsupported — fall
+        // through to copy-to-clipboard below.
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      alert(shareUrl);
     }
   };
 
@@ -171,9 +199,34 @@ export const ArticleDetailPage: React.FC = () => {
             
             {!user && (
               <p className="text-[10px] text-stone-500 text-center">
-                Please <Link to="/login" className="text-emerald-700 hover:underline font-bold">sign in</Link> to toggle bookmarks.
+                Please <Link to="/login" className="text-emerald-700 underline font-bold">sign in</Link> to toggle bookmarks.
               </p>
             )}
+          </div>
+
+          {/* Share Widget */}
+          <div className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400">Share</h3>
+            <button
+              onClick={handleShare}
+              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all border bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200"
+              id="share-detail-btn"
+            >
+              {shareCopied ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Link copied!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" />
+                  <span>Copy share link</span>
+                </>
+              )}
+            </button>
+            <p className="text-[10px] text-stone-400 text-center">
+              Shows a preview image and summary wherever you paste it.
+            </p>
           </div>
 
           {/* Sources Metadata Widget */}

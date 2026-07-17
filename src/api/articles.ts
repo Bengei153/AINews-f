@@ -120,6 +120,7 @@ export interface CreateArticlePayload {
   sourceType: 'Original' | 'Aggregated' | 'AIGenerated';
   sourceUrl?: string | null;
   sourceName?: string | null;
+  coverImageUrl?: string | null;
 }
 
 export const createArticle = async (payload: CreateArticlePayload): Promise<string> => {
@@ -153,6 +154,7 @@ export const createArticle = async (payload: CreateArticlePayload): Promise<stri
       publishedOn: new Date().toISOString(),
       sourceName: payload.sourceName || null,
       sourceUrl: payload.sourceUrl || null,
+      coverImageUrl: payload.coverImageUrl || null,
       tags: selectedTags,
       published: false, // Starts as draft / review state
     };

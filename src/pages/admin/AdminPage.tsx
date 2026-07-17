@@ -109,6 +109,7 @@ export const AdminPage: React.FC = () => {
   const [artSourceType, setArtSourceType] = useState<'Original' | 'Aggregated' | 'AIGenerated'>('Original');
   const [artSourceName, setArtSourceName] = useState('');
   const [artSourceUrl, setArtSourceUrl] = useState('');
+  const [artCoverImageUrl, setArtCoverImageUrl] = useState('');
   const [isCreatingArticle, setIsCreatingArticle] = useState(false);
 
   const handleCreateArticle = async (e: React.FormEvent) => {
@@ -129,6 +130,7 @@ export const AdminPage: React.FC = () => {
         sourceType: artSourceType,
         sourceName: artSourceName || null,
         sourceUrl: artSourceUrl || null,
+        coverImageUrl: artCoverImageUrl || null,
       });
 
       showNotification('success', 'Draft article created successfully and queued!');
@@ -140,6 +142,7 @@ export const AdminPage: React.FC = () => {
       setArtSelectedTagIds([]);
       setArtSourceName('');
       setArtSourceUrl('');
+      setArtCoverImageUrl('');
       
       // Invalidate list queries
       queryClient.invalidateQueries({ queryKey: ['admin-drafts'] });
@@ -584,9 +587,22 @@ export const AdminPage: React.FC = () => {
                   placeholder="https://openai.com/research/..."
                   value={artSourceUrl}
                   onChange={(e) => setArtSourceUrl(e.target.value)}
-                  className={fieldClass}
+                  className="w-full text-sm px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-stone-50/50"
                 />
               </div>
+            </div>
+
+            {/* Cover Image (used for the article page and link-share previews) */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-stone-600 block">Cover Image URL (optional)</label>
+              <p className="text-[10px] text-stone-400">Shown as the preview image when this article's link is shared anywhere. Recommend 1200×630. Falls back to the site default if left blank.</p>
+              <input
+                type="url"
+                placeholder="https://images.example.com/gpt-6-cover.jpg"
+                value={artCoverImageUrl}
+                onChange={(e) => setArtCoverImageUrl(e.target.value)}
+                className="w-full text-sm px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-stone-50/50"
+              />
             </div>
 
             {/* Submit btn */}
