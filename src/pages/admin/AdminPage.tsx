@@ -11,6 +11,7 @@ import { createAiTool } from '../../api/aiTools';
 import { ArticlePillar } from '../../types/api';
 import { getAdminDrafts, createArticle, publishArticle, triggerNewsIngestion } from '../../api/articles';
 import { sendNewsletterNow } from '../../api/newsletter';
+import { ImageUploadWidget } from '../../components/ImageUploadWidget';
 import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail } from 'lucide-react';
 
 const PILLARS: { value: ArticlePillar; label: string }[] = [
@@ -596,6 +597,12 @@ export const AdminPage: React.FC = () => {
             <div className="space-y-1">
               <label className="text-xs font-bold text-stone-600 block">Cover Image URL (optional)</label>
               <p className="text-[10px] text-stone-400">Shown as the preview image when this article's link is shared anywhere. Recommend 1200×630. Falls back to the site default if left blank.</p>
+              <ImageUploadWidget
+                folder="ArticleCovers"
+                currentUrl={artCoverImageUrl || null}
+                onUploaded={(url) => setArtCoverImageUrl(url)}
+              />
+              <p className="text-[10px] text-stone-400">Or paste a URL directly:</p>
               <input
                 type="url"
                 placeholder="https://images.example.com/gpt-6-cover.jpg"
