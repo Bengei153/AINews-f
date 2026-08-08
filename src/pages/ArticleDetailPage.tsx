@@ -7,11 +7,13 @@ import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
-import { getArticleBySlug } from '../api/articles';
+import { getArticleBySlug, incrementArticleView } from '../api/articles';
 import { useAuth } from '../store/authStore';
-import { Clock, Bookmark, ArrowLeft, ExternalLink, Globe, BookOpen, AlertCircle, Share2, CheckCircle2 } from 'lucide-react';
+import { Clock, Bookmark, ArrowLeft, ExternalLink, Globe, BookOpen, AlertCircle, Share2, CheckCircle2, Eye } from 'lucide-react';
 import { ArticlePillar } from '../types/api';
 import { getApiRootUrl } from '../api/client';
+import { ReactionBar } from '../components/ReactionBar';
+import { CommentSection } from '../components/CommentSection';
 
 const PILLAR_LABELS: Record<ArticlePillar, string> = {
   AIForStudents: 'AI for Students',
@@ -36,6 +38,19 @@ export const ArticleDetailPage: React.FC = () => {
 
   const isBookmarked = article ? bookmarks.some((b) => b.articleId === article.id) : false;
   const [shareCopied, setShareCopied] = React.useState(false);
+
+  // Record a view once per article per browser session — sessionStorage
+  // means a refresh or revisit within the same tab session won't inflate
+  // the count, but a genuinely new visit (or new tab) will.
+  React.useEffect(() => {
+    if (!article) return;
+    const key = `viewed:${article.slug}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    incrementArticleView(article.slug).catch(() => {
+      // Non-critical — a failed view-count ping shouldn't disrupt reading.
+    });
+  }, [article?.slug]);
 
   const handleBookmarkToggle = async () => {
     if (!user) {
@@ -160,6 +175,11 @@ export const ArticleDetailPage: React.FC = () => {
                 <Clock className="w-3.5 h-3.5" />
                 {article.readTimeMinutes} min read
               </span>
+              <div className="w-1 h-1 rounded-full bg-stone-300"></div>
+              <span className="flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5" />
+                {(article.viewCount ?? 0).toLocaleString()} views
+              </span>
               {article.categoryName && (
                 <>
                   <div className="w-1 h-1 rounded-full bg-stone-300"></div>
@@ -168,12 +188,18 @@ export const ArticleDetailPage: React.FC = () => {
               )}
             </div>
 
+            <ReactionBar articleId={article.id} />
+
           </div>
 
           {/* Render Markdown Body safely using react-markdown and pristine Tailwind classes */}
           <article className="prose prose-stone max-w-none prose-headings:font-serif prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-p:text-sm prose-p:leading-relaxed prose-p:text-stone-700 prose-blockquote:border-emerald-600 prose-blockquote:bg-emerald-50/20 prose-blockquote:text-stone-600 prose-blockquote:font-medium prose-blockquote:text-xs prose-blockquote:p-4 prose-blockquote:rounded-r-lg space-y-5">
             <ReactMarkdown>{article.body}</ReactMarkdown>
           </article>
+
+          <hr className="border-stone-200" />
+
+          <CommentSection articleId={article.id} />
 
         </div>
 

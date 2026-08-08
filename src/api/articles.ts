@@ -106,7 +106,19 @@ export const getArticleBySlug = async (slug: string): Promise<ArticleDetail> => 
     return article;
   }
 
-  const response = await apiClient.get<ArticleDetail>(`/articles/${slug}`);
+const response = await apiClient.get<ArticleDetail>(`/articles/${slug}`);
+  return response.data;
+};
+
+/// Records a view. Call once per page load — dedup against re-renders is
+/// the caller's job (see the sessionStorage check in ArticleDetailPage).
+export const incrementArticleView = async (slug: string): Promise<number> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    return 0;
+  }
+
+  const response = await apiClient.post<number>(`/articles/${slug}/view`);
   return response.data;
 };
 

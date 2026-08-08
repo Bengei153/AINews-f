@@ -5,7 +5,7 @@
 
 import { apiClient, isDemoMode, simulateNetworkDelay } from './client';
 
-export type ImageUploadFolder = 'ArticleCovers' | 'AiToolLogos';
+export type ImageUploadFolder = 'ArticleCovers' | 'AiToolLogos' | 'Comments';
 
 export const uploadImage = async (file: File, folder: ImageUploadFolder): Promise<string> => {
   if (isDemoMode()) {

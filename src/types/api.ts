@@ -17,6 +17,7 @@ export interface Article {
   readTimeMinutes: number;
   publishedOn: string;
   coverImageUrl?: string | null;
+  viewCount?: number;
 }
 
 export interface ArticleDetail extends Article {
@@ -24,6 +25,22 @@ export interface ArticleDetail extends Article {
   sourceName: string | null;
   sourceUrl: string | null;
   tags: string[];
+}
+
+export type ReactionType = 'Like' | 'Love' | 'Insightful' | 'MindBlown';
+
+export interface ArticleReactions {
+  counts: Record<ReactionType, number>;
+  currentUserReaction: ReactionType | null;
+}
+
+export interface Comment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  body: string;
+  imageUrl: string | null;
+  created: string;
 }
 
 export interface PaginatedResult<T> {
