@@ -11,8 +11,10 @@ import { createAiTool } from '../../api/aiTools';
 import { ArticlePillar } from '../../types/api';
 import { getAdminDrafts, createArticle, publishArticle, triggerNewsIngestion } from '../../api/articles';
 import { sendNewsletterNow } from '../../api/newsletter';
+import { getAdminTutorialDrafts, createTutorial, publishTutorial } from '../../api/tutorials';
 import { ImageUploadWidget } from '../../components/ImageUploadWidget';
-import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail } from 'lucide-react';
+import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap } from 'lucide-react';
+import { DifficultyLevel } from '../../types/api';
 
 const PILLARS: { value: ArticlePillar; label: string }[] = [
   { value: 'AIForStudents', label: 'AI for Students' },
@@ -22,6 +24,8 @@ const PILLARS: { value: ArticlePillar; label: string }[] = [
   { value: 'FutureOfAI', label: 'Future of AI' },
 ];
 
+const DIFFICULTIES: DifficultyLevel[] = ['Beginner', 'Intermediate', 'Advanced'];
+
 const fieldClass =
   'w-full text-sm px-3 py-2.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-stone-50/50';
 
@@ -30,7 +34,7 @@ const primaryButtonClass =
 
 export const AdminPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'taxonomy'>('queue');
+  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'taxonomy' | 'tutorial'>('queue');
 
   // Success notifications
   const [notify, setNotify] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -44,6 +48,11 @@ export const AdminPage: React.FC = () => {
   const { data: drafts, isLoading: isDraftsLoading } = useQuery({
     queryKey: ['admin-drafts'],
     queryFn: getAdminDrafts,
+  });
+
+  const { data: tutorialDrafts, isLoading: isTutorialDraftsLoading } = useQuery({
+    queryKey: ['admin-tutorial-drafts'],
+    queryFn: getAdminTutorialDrafts,
   });
 
   const { data: categories } = useQuery({
@@ -154,6 +163,60 @@ export const AdminPage: React.FC = () => {
       setIsCreatingArticle(false);
     }
   };
+
+  // B. New Tutorial Draft
+  const [tutTitle, setTutTitle] = useState('');
+  const [tutSummary, setTutSummary] = useState('');
+  const [tutBody, setTutBody] = useState('');
+  const [tutToolName, setTutToolName] = useState('');
+  const [tutDifficulty, setTutDifficulty] = useState<DifficultyLevel>('Beginner');
+  const [tutCoverImageUrl, setTutCoverImageUrl] = useState('');
+  const [isCreatingTutorial, setIsCreatingTutorial] = useState(false);
+
+  const handleCreateTutorial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tutTitle || !tutSummary || !tutBody || !tutToolName) {
+      showNotification('error', 'Please complete all required fields.');
+      return;
+    }
+    setIsCreatingTutorial(true);
+    try {
+      await createTutorial({
+        title: tutTitle,
+        summary: tutSummary,
+        body: tutBody,
+        toolName: tutToolName,
+        difficultyLevel: tutDifficulty,
+        coverImageUrl: tutCoverImageUrl || null,
+      });
+
+      showNotification('success', 'Draft tutorial created successfully!');
+
+      setTutTitle('');
+      setTutSummary('');
+      setTutBody('');
+      setTutToolName('');
+      setTutCoverImageUrl('');
+
+      queryClient.invalidateQueries({ queryKey: ['admin-tutorial-drafts'] });
+    } catch (err: any) {
+      showNotification('error', err.detail || 'Failed to create draft tutorial.');
+    } finally {
+      setIsCreatingTutorial(false);
+    }
+  };
+
+  const publishTutorialMutation = useMutation({
+    mutationFn: publishTutorial,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-tutorial-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['tutorials'] });
+      showNotification('success', 'Tutorial published successfully!');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to publish tutorial.');
+    },
+  });
 
   const handleToggleFormTag = (id: string) => {
     setArtSelectedTagIds((prev) =>
@@ -348,6 +411,20 @@ export const AdminPage: React.FC = () => {
           aria-selected={activeTab === 'taxonomy'}
         >
           Taxonomy Node
+        </button>
+        <button
+          onClick={() => setActiveTab('tutorial')}
+          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
+            activeTab === 'tutorial'
+              ? 'bg-stone-900 text-white shadow-sm'
+              : 'text-stone-500 hover:text-stone-950 hover:bg-stone-50'
+          }`}
+          id="admin-tab-tutorial"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'tutorial'}
+        >
+          Tutorials ({tutorialDrafts?.length || 0})
         </button>
       </div>
 
@@ -865,6 +942,160 @@ export const AdminPage: React.FC = () => {
                 <span>Add Taxonomy Tag</span>
               </button>
             </form>
+          </div>
+
+        </section>
+      )}
+
+      {/* TAB 5: TUTORIALS — compose + review queue combined */}
+      {activeTab === 'tutorial' && (
+        <section className="space-y-8">
+
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-6">
+            <div className="border-b border-stone-100 pb-3">
+              <h2 className="font-serif text-xl font-bold text-stone-800 flex items-center gap-1.5">
+                <GraduationCap className="w-5 h-5 text-emerald-800" />
+                Write a Tutorial
+              </h2>
+              <p className="text-xs text-stone-500 mt-1">A "how to use X" guide — for whatever AI tool just came out.</p>
+            </div>
+
+            <form onSubmit={handleCreateTutorial} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-stone-600 block">Tool Name *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. ChatGPT-5, Claude Opus 4.8"
+                    value={tutToolName}
+                    onChange={(e) => setTutToolName(e.target.value)}
+                    className={fieldClass}
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-stone-600 block">Difficulty *</label>
+                  <select
+                    value={tutDifficulty}
+                    onChange={(e) => setTutDifficulty(e.target.value as DifficultyLevel)}
+                    className={fieldClass}
+                    required
+                  >
+                    {DIFFICULTIES.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-stone-600 block">Tutorial Title *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Getting started with ChatGPT-5 for essay outlines"
+                  value={tutTitle}
+                  onChange={(e) => setTutTitle(e.target.value)}
+                  className={fieldClass}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-stone-600 block">Summary *</label>
+                <textarea
+                  placeholder="A 1-2 sentence description of what this tutorial covers."
+                  value={tutSummary}
+                  onChange={(e) => setTutSummary(e.target.value)}
+                  className={`${fieldClass} h-16`}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-stone-600 block">Body (supports Markdown) *</label>
+                <textarea
+                  placeholder="# Step 1&#10;&#10;Explain the first step clearly..."
+                  value={tutBody}
+                  onChange={(e) => setTutBody(e.target.value)}
+                  className={`${fieldClass} font-mono h-48`}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-stone-600 block">Cover Image (optional)</label>
+                <ImageUploadWidget
+                  folder="TutorialCovers"
+                  currentUrl={tutCoverImageUrl || null}
+                  onUploaded={(url) => setTutCoverImageUrl(url)}
+                />
+              </div>
+
+              <div className="flex justify-end pt-4 border-t border-stone-100">
+                <button type="submit" disabled={isCreatingTutorial} className={primaryButtonClass}>
+                  {isCreatingTutorial ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      <span>Create Tutorial Draft</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400">
+              <Layers className="w-4 h-4" />
+              Tutorial Review Queue
+            </div>
+
+            {isTutorialDraftsLoading ? (
+              <div className="flex flex-col items-center py-12 gap-3 text-stone-400">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <p className="text-xs">Loading queue items...</p>
+              </div>
+            ) : !tutorialDrafts || tutorialDrafts.length === 0 ? (
+              <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center max-w-md mx-auto space-y-3">
+                <CheckSquare className="w-12 h-12 text-emerald-500 mx-auto" />
+                <h3 className="font-serif text-lg font-bold text-stone-800">No tutorial drafts waiting</h3>
+                <p className="text-sm text-stone-500">Use the form above to write one.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {tutorialDrafts.map((draft) => (
+                  <div
+                    key={draft.id}
+                    className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-stone-300 transition-colors"
+                  >
+                    <div className="space-y-1.5 max-w-2xl">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                          {draft.difficultyLevel}
+                        </span>
+                        <span className="text-xs font-semibold text-stone-500">{draft.toolName}</span>
+                      </div>
+                      <h3 className="font-serif text-lg font-bold text-stone-900">{draft.title}</h3>
+                      <p className="text-xs text-stone-600 line-clamp-2">{draft.summary}</p>
+                    </div>
+                    <div className="flex items-center gap-2 self-start md:self-center">
+                      <button
+                        onClick={() => publishTutorialMutation.mutate(draft.id)}
+                        disabled={publishTutorialMutation.isPending}
+                        className="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-75 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm cursor-pointer transition-colors whitespace-nowrap"
+                      >
+                        Approve & Publish
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
         </section>

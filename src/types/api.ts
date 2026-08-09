@@ -43,6 +43,24 @@ export interface Comment {
   created: string;
 }
 
+export type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+
+export interface Tutorial {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  toolName: string;
+  difficultyLevel: DifficultyLevel;
+  coverImageUrl?: string | null;
+  publishedOn: string | null;
+  viewCount: number;
+}
+
+export interface TutorialDetail extends Tutorial {
+  body: string;
+}
+
 export interface PaginatedResult<T> {
   items: T[];
   pageNumber: number;

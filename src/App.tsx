@@ -16,6 +16,10 @@ const ArticleDetailPage = lazy(() =>
   import('./pages/ArticleDetailPage').then((module) => ({ default: module.ArticleDetailPage }))
 );
 const ToolsPage = lazy(() => import('./pages/ToolsPage').then((module) => ({ default: module.ToolsPage })));
+const TutorialsPage = lazy(() => import('./pages/TutorialsPage').then((module) => ({ default: module.TutorialsPage })));
+const TutorialDetailPage = lazy(() =>
+  import('./pages/TutorialDetailPage').then((module) => ({ default: module.TutorialDetailPage }))
+);
 const LoginPage = lazy(() => import('./pages/LoginPage').then((module) => ({ default: module.LoginPage })));
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then((module) => ({ default: module.RegisterPage })));
 const OnboardingPage = lazy(() =>
@@ -61,6 +65,8 @@ export default function App() {
                 <Route path="/articles" element={<ArticlesPage />} />
                 <Route path="/articles/:slug" element={<ArticleDetailPage />} />
                 <Route path="/tools" element={<ToolsPage />} />
+                <Route path="/tutorials" element={<TutorialsPage />} />
+                <Route path="/tutorials/:slug" element={<TutorialDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
 

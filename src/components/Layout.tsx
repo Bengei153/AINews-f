@@ -106,6 +106,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             >
               AI Directory
             </Link>
+            <Link
+              to="/tutorials"
+              className={`text-sm font-medium tracking-wide transition-colors ${
+                isActive('/tutorials') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              Tutorials
+            </Link>
             {user && (
               <Link
                 to="/bookmarks"
@@ -239,6 +247,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
             >
               AI Directory
+            </Link>
+            <Link
+              to="/tutorials"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
+            >
+              Tutorials
             </Link>
             {user && (
               <Link

@@ -67,13 +67,12 @@ export const ArticlesPage: React.FC = () => {
 
   const updateFilters = (newFilters: Record<string, string | undefined>) => {
     const current = Object.fromEntries(searchParams.entries());
-    const merged = { ...current, ...newFilters, page: '1' }; // reset page on filter change
-    
+    const combined: Record<string, string | undefined> = { ...current, ...newFilters, page: '1' }; // reset page on filter change
+
     // Clear undefined or empty properties
-    Object.keys(merged).forEach((key) => {
-      if (!merged[key]) {
-        delete merged[key];
-      }
+    const merged: Record<string, string> = {};
+    Object.entries(combined).forEach(([key, value]) => {
+      if (value) merged[key] = value;
     });
 
     setSearchParams(merged);
