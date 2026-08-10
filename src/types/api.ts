@@ -61,6 +61,13 @@ export interface TutorialDetail extends Tutorial {
   body: string;
 }
 
+export interface GameProfile {
+  totalXp: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityDate: string | null;
+}
+
 export interface PaginatedResult<T> {
   items: T[];
   pageNumber: number;

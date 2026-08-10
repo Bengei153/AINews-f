@@ -8,6 +8,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../store/authStore';
 import { Sparkles, Bookmark, LogOut, Menu, X, ShieldAlert, Sliders, Moon, Sun } from 'lucide-react';
 import { NewsletterSignup } from './NewsletterSignup';
+import { StreakBadge } from './StreakBadge';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -129,6 +130,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
           {/* Desktop Action Widgets */}
           <div className="hidden md:flex items-center gap-4">
+            <StreakBadge />
             <ThemeToggle />
             {user ? (
               <div className="flex items-center gap-3">
