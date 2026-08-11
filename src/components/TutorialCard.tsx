@@ -25,10 +25,14 @@ export const TutorialCard: React.FC<TutorialCardProps> = ({ tutorial }) => {
         <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border ${DIFFICULTY_STYLES[tutorial.difficultyLevel]}`}>
           {tutorial.difficultyLevel}
         </span>
-        <span className="text-[10px] font-bold text-stone-500 flex items-center gap-1">
+        <Link
+          to={`/tutorials?tool=${encodeURIComponent(tutorial.toolName)}`}
+          onClick={(e) => e.stopPropagation()}
+          className="text-[10px] font-bold text-stone-500 hover:text-emerald-700 flex items-center gap-1 transition-colors"
+        >
           <GraduationCap className="w-3.5 h-3.5" />
           {tutorial.toolName}
-        </span>
+        </Link>
       </div>
 
       <div className="p-4 flex-1 flex flex-col justify-between">

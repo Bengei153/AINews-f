@@ -60,6 +60,14 @@ export const publishTutorial = async (tutorialId: string): Promise<void> => {
   await apiClient.post(`/tutorials/${tutorialId}/publish`);
 };
 
+export const deleteTutorial = async (tutorialId: string): Promise<void> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    return;
+  }
+  await apiClient.delete(`/tutorials/${tutorialId}`);
+};
+
 export interface DraftTutorial {
   id: string;
   title: string;

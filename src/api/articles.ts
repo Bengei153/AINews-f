@@ -202,6 +202,17 @@ export const publishArticle = async (articleId: string): Promise<void> => {
   await apiClient.post(`/articles/${articleId}/publish`);
 };
 
+export const deleteArticle = async (articleId: string): Promise<void> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    const articles = MockDatabase.getArticles();
+    MockDatabase.saveArticles(articles.filter((a) => a.id !== articleId));
+    return;
+  }
+
+  await apiClient.delete(`/articles/${articleId}`);
+};
+
 // Custom helper: get drafts for Admin view (not exposed in the backend, but helpful for admin UI curation)
 export const getAdminDrafts = async (): Promise<ArticleDetail[]> => {
   if (isDemoMode()) {

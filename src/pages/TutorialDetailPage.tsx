@@ -4,12 +4,13 @@
  */
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
-import { getTutorialBySlug, incrementTutorialView } from '../api/tutorials';
-import { ArrowLeft, Eye, GraduationCap, AlertCircle } from 'lucide-react';
+import { getTutorialBySlug, incrementTutorialView, deleteTutorial } from '../api/tutorials';
+import { ArrowLeft, Eye, GraduationCap, AlertCircle, Trash2 } from 'lucide-react';
 import { DifficultyLevel } from '../types/api';
+import { useAuth } from '../store/authStore';
 
 const DIFFICULTY_STYLES: Record<DifficultyLevel, string> = {
   Beginner: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -19,6 +20,8 @@ const DIFFICULTY_STYLES: Record<DifficultyLevel, string> = {
 
 export const TutorialDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data: tutorial, isLoading, isError } = useQuery({
     queryKey: ['tutorial', slug],
@@ -33,6 +36,23 @@ export const TutorialDetailPage: React.FC = () => {
     sessionStorage.setItem(key, '1');
     incrementTutorialView(tutorial.slug).catch(() => {});
   }, [tutorial?.slug]);
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteTutorial,
+    onSuccess: () => {
+      navigate('/tutorials');
+    },
+    onError: (err: any) => {
+      alert(err?.detail || 'Failed to delete tutorial.');
+    },
+  });
+
+  const handleDeleteTutorial = () => {
+    if (!tutorial) return;
+    if (window.confirm(`Delete "${tutorial.title}"? This can't be undone.`)) {
+      deleteMutation.mutate(tutorial.id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -68,10 +88,13 @@ export const TutorialDetailPage: React.FC = () => {
           <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border ${DIFFICULTY_STYLES[tutorial.difficultyLevel]}`}>
             {tutorial.difficultyLevel}
           </span>
-          <span className="text-xs font-bold text-stone-500 flex items-center gap-1">
+          <Link
+            to={`/tutorials?tool=${encodeURIComponent(tutorial.toolName)}`}
+            className="text-xs font-bold text-stone-500 hover:text-emerald-700 flex items-center gap-1 transition-colors"
+          >
             <GraduationCap className="w-3.5 h-3.5" />
             {tutorial.toolName}
-          </span>
+          </Link>
           <div className="w-1 h-1 rounded-full bg-stone-300"></div>
           <span className="text-xs text-stone-500 flex items-center gap-1">
             <Eye className="w-3.5 h-3.5" />
@@ -85,6 +108,20 @@ export const TutorialDetailPage: React.FC = () => {
       <article className="prose prose-stone max-w-none prose-headings:font-serif prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-p:text-sm prose-p:leading-relaxed prose-p:text-stone-700 space-y-5">
         <ReactMarkdown>{tutorial.body}</ReactMarkdown>
       </article>
+
+      {user?.role === 'Admin' && (
+        <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-sm space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-red-400">Admin</h3>
+          <button
+            onClick={handleDeleteTutorial}
+            disabled={deleteMutation.isPending}
+            className="w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all bg-red-50 hover:bg-red-100 disabled:opacity-60 text-red-700"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>{deleteMutation.isPending ? 'Deleting...' : 'Delete this tutorial'}</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

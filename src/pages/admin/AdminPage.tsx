@@ -9,11 +9,11 @@ import { getCategories, createCategory } from '../../api/categories';
 import { getTags, createTag } from '../../api/tags';
 import { createAiTool } from '../../api/aiTools';
 import { ArticlePillar } from '../../types/api';
-import { getAdminDrafts, createArticle, publishArticle, triggerNewsIngestion } from '../../api/articles';
+import { getAdminDrafts, createArticle, publishArticle, deleteArticle, triggerNewsIngestion } from '../../api/articles';
 import { sendNewsletterNow } from '../../api/newsletter';
-import { getAdminTutorialDrafts, createTutorial, publishTutorial } from '../../api/tutorials';
+import { getAdminTutorialDrafts, createTutorial, publishTutorial, deleteTutorial } from '../../api/tutorials';
 import { ImageUploadWidget } from '../../components/ImageUploadWidget';
-import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap } from 'lucide-react';
+import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap, Trash2 } from 'lucide-react';
 import { DifficultyLevel } from '../../types/api';
 
 const PILLARS: { value: ArticlePillar; label: string }[] = [
@@ -78,6 +78,25 @@ export const AdminPage: React.FC = () => {
       showNotification('error', err.detail || 'Failed to publish draft.');
     },
   });
+
+  const deleteArticleMutation = useMutation({
+    mutationFn: deleteArticle,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-articles'] });
+      showNotification('success', 'Article deleted.');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to delete article.');
+    },
+  });
+
+  const handleDeleteArticle = (articleId: string, title: string) => {
+    if (window.confirm(`Delete "${title}"? This can't be undone.`)) {
+      deleteArticleMutation.mutate(articleId);
+    }
+  };
 
   const ingestMutation = useMutation({
     mutationFn: triggerNewsIngestion,
@@ -217,6 +236,24 @@ export const AdminPage: React.FC = () => {
       showNotification('error', err.detail || 'Failed to publish tutorial.');
     },
   });
+
+  const deleteTutorialMutation = useMutation({
+    mutationFn: deleteTutorial,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-tutorial-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['tutorials'] });
+      showNotification('success', 'Tutorial deleted.');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to delete tutorial.');
+    },
+  });
+
+  const handleDeleteTutorial = (tutorialId: string, title: string) => {
+    if (window.confirm(`Delete "${title}"? This can't be undone.`)) {
+      deleteTutorialMutation.mutate(tutorialId);
+    }
+  };
 
   const handleToggleFormTag = (id: string) => {
     setArtSelectedTagIds((prev) =>
@@ -508,6 +545,15 @@ export const AdminPage: React.FC = () => {
                       type="button"
                     >
                       Approve & Publish
+                    </button>
+                    <button
+                      onClick={() => handleDeleteArticle(draft.id, draft.title)}
+                      disabled={deleteArticleMutation.isPending}
+                      className="bg-white hover:bg-red-50 disabled:opacity-60 text-red-600 border border-red-200 p-2.5 rounded-lg shadow-sm cursor-pointer transition-colors"
+                      type="button"
+                      title="Delete draft"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -1090,6 +1136,14 @@ export const AdminPage: React.FC = () => {
                         className="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-75 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm cursor-pointer transition-colors whitespace-nowrap"
                       >
                         Approve & Publish
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTutorial(draft.id, draft.title)}
+                        disabled={deleteTutorialMutation.isPending}
+                        className="bg-white hover:bg-red-50 disabled:opacity-60 text-red-600 border border-red-200 p-2.5 rounded-lg shadow-sm cursor-pointer transition-colors"
+                        title="Delete draft"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>

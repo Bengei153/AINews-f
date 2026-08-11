@@ -226,6 +226,8 @@ button, input, select, textarea { font: inherit; }
 .hover\:text-stone-950:hover { color: #0c0a09; }
 .hover\:text-white:hover { color: #ffffff; }
 .hover\:border-stone-300:hover { border-color: #d6d3d1; }
+.hover\:bg-red-50:hover { background-color: #fef2f2; }
+.hover\:bg-red-100:hover { background-color: #fee2e2; }
 .focus\:outline-none:focus { outline: none; }
 .focus\:ring-2:focus { box-shadow: 0 0 0 2px var(--ring-color, rgba(5, 150, 105, 0.5)); }
 .focus\:ring-emerald-500\/20:focus { --ring-color: rgba(16, 185, 129, 0.2); }
@@ -374,6 +376,7 @@ button, input, select, textarea { font: inherit; }
 .p-4 { padding: 1rem; }
 .p-5 { padding: 1.25rem; }
 .p-6 { padding: 1.5rem; }
+.p-2\.5 { padding: 0.625rem; }
 .pb-0 { padding-bottom: 0; }
 .pb-2 { padding-bottom: 0.5rem; }
 .pb-3 { padding-bottom: 0.75rem; }

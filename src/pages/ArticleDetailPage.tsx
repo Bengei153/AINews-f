@@ -5,11 +5,11 @@
 
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
-import { getArticleBySlug, incrementArticleView } from '../api/articles';
+import { getArticleBySlug, incrementArticleView, deleteArticle } from '../api/articles';
 import { useAuth } from '../store/authStore';
-import { Clock, Bookmark, ArrowLeft, ExternalLink, Globe, BookOpen, AlertCircle, Share2, CheckCircle2, Eye } from 'lucide-react';
+import { Clock, Bookmark, ArrowLeft, ExternalLink, Globe, BookOpen, AlertCircle, Share2, CheckCircle2, Eye, Trash2 } from 'lucide-react';
 import { ArticlePillar } from '../types/api';
 import { getApiRootUrl } from '../api/client';
 import { ReactionBar } from '../components/ReactionBar';
@@ -88,6 +88,23 @@ export const ArticleDetailPage: React.FC = () => {
       setTimeout(() => setShareCopied(false), 2000);
     } catch {
       alert(shareUrl);
+    }
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteArticle,
+    onSuccess: () => {
+      navigate('/articles');
+    },
+    onError: (err: any) => {
+      alert(err?.detail || 'Failed to delete article.');
+    },
+  });
+
+  const handleDeleteArticle = () => {
+    if (!article) return;
+    if (window.confirm(`Delete "${article.title}"? This can't be undone.`)) {
+      deleteMutation.mutate(article.id);
     }
   };
 
@@ -254,6 +271,21 @@ export const ArticleDetailPage: React.FC = () => {
               Shows a preview image and summary wherever you paste it.
             </p>
           </div>
+
+          {/* Admin-only: Delete Article */}
+          {user?.role === 'Admin' && (
+            <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-sm space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-red-400">Admin</h3>
+              <button
+                onClick={handleDeleteArticle}
+                disabled={deleteMutation.isPending}
+                className="w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all bg-red-50 hover:bg-red-100 disabled:opacity-60 text-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{deleteMutation.isPending ? 'Deleting...' : 'Delete this article'}</span>
+              </button>
+            </div>
+          )}
 
           {/* Sources Metadata Widget */}
           {(article.sourceName || article.sourceUrl) && (

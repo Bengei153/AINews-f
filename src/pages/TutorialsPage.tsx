@@ -17,20 +17,27 @@ export const TutorialsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const difficultyLevel = (searchParams.get('difficulty') as DifficultyLevel) || undefined;
+  const toolNameParam = searchParams.get('tool') || '';
   const searchInput = searchParams.get('search') || '';
   const pageNumber = parseInt(searchParams.get('page') || '1', 10);
 
   const [searchQuery, setSearchQuery] = useState(searchInput);
+  const [toolQuery, setToolQuery] = useState(toolNameParam);
 
   useEffect(() => {
     setSearchQuery(searchInput);
   }, [searchInput]);
 
+  useEffect(() => {
+    setToolQuery(toolNameParam);
+  }, [toolNameParam]);
+
   const { data: tutorialsResult, isLoading, isPlaceholderData } = useQuery({
-    queryKey: ['tutorials', difficultyLevel, searchInput, pageNumber],
+    queryKey: ['tutorials', difficultyLevel, toolNameParam, searchInput, pageNumber],
     queryFn: () =>
       getTutorials({
         difficultyLevel,
+        toolName: toolNameParam || undefined,
         search: searchInput || undefined,
         pageNumber,
         pageSize: 6,
@@ -50,11 +57,12 @@ export const TutorialsPage: React.FC = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateFilters({ search: searchQuery });
+    updateFilters({ search: searchQuery, tool: toolQuery });
   };
 
   const handleResetFilters = () => {
     setSearchQuery('');
+    setToolQuery('');
     setSearchParams({});
   };
 
@@ -77,7 +85,7 @@ export const TutorialsPage: React.FC = () => {
           </p>
         </div>
 
-        {(difficultyLevel || searchInput) && (
+        {(difficultyLevel || searchInput || toolNameParam) && (
           <button
             onClick={handleResetFilters}
             className="self-start sm:self-center text-xs font-bold text-red-600 hover:text-red-800 flex items-center gap-1 bg-red-50 hover:bg-red-100/60 px-3 py-1.5 rounded-md transition-colors"
@@ -94,7 +102,18 @@ export const TutorialsPage: React.FC = () => {
           Find a tutorial
         </div>
 
-        <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Tool name — e.g. ChatGPT-5"
+              value={toolQuery}
+              onChange={(e) => setToolQuery(e.target.value)}
+              className="w-full text-sm pl-9 pr-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-stone-50/50"
+            />
+            <GraduationCap className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
+          </div>
+
           <div className="relative">
             <input
               type="text"
@@ -110,7 +129,7 @@ export const TutorialsPage: React.FC = () => {
           <div>
             <select
               value={difficultyLevel || ''}
-              onChange={(e) => updateFilters({ difficulty: e.target.value || undefined })}
+              onChange={(e) => updateFilters({ difficulty: e.target.value || undefined, tool: toolQuery, search: searchQuery })}
               className="w-full text-sm px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-stone-50/50 text-stone-700"
             >
               <option value="">Any Difficulty</option>
