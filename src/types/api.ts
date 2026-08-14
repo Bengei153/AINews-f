@@ -68,6 +68,22 @@ export interface GameProfile {
   lastActivityDate: string | null;
 }
 
+export interface Video {
+  id: string;
+  title: string;
+  slug: string;
+  youTubeVideoId: string;
+  thumbnailUrl: string;
+  channelName: string;
+  aiReview: string;
+  publishedOn: string | null;
+  viewCount: number;
+}
+
+export interface VideoDetail extends Video {
+  sourceUrl: string;
+}
+
 export interface PaginatedResult<T> {
   items: T[];
   pageNumber: number;

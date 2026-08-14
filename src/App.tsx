@@ -20,6 +20,10 @@ const TutorialsPage = lazy(() => import('./pages/TutorialsPage').then((module) =
 const TutorialDetailPage = lazy(() =>
   import('./pages/TutorialDetailPage').then((module) => ({ default: module.TutorialDetailPage }))
 );
+const VideosPage = lazy(() => import('./pages/VideosPage').then((module) => ({ default: module.VideosPage })));
+const VideoDetailPage = lazy(() =>
+  import('./pages/VideoDetailPage').then((module) => ({ default: module.VideoDetailPage }))
+);
 const LoginPage = lazy(() => import('./pages/LoginPage').then((module) => ({ default: module.LoginPage })));
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then((module) => ({ default: module.RegisterPage })));
 const OnboardingPage = lazy(() =>
@@ -67,6 +71,8 @@ export default function App() {
                 <Route path="/tools" element={<ToolsPage />} />
                 <Route path="/tutorials" element={<TutorialsPage />} />
                 <Route path="/tutorials/:slug" element={<TutorialDetailPage />} />
+                <Route path="/videos" element={<VideosPage />} />
+                <Route path="/videos/:slug" element={<VideoDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
 

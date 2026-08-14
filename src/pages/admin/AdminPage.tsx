@@ -12,8 +12,9 @@ import { ArticlePillar } from '../../types/api';
 import { getAdminDrafts, createArticle, publishArticle, deleteArticle, triggerNewsIngestion } from '../../api/articles';
 import { sendNewsletterNow } from '../../api/newsletter';
 import { getAdminTutorialDrafts, createTutorial, publishTutorial, deleteTutorial } from '../../api/tutorials';
+import { getAdminVideoDrafts, publishVideo, deleteVideo, triggerVideoIngestion } from '../../api/videos';
 import { ImageUploadWidget } from '../../components/ImageUploadWidget';
-import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap, Trash2 } from 'lucide-react';
+import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap, Trash2, PlayCircle } from 'lucide-react';
 import { DifficultyLevel } from '../../types/api';
 
 const PILLARS: { value: ArticlePillar; label: string }[] = [
@@ -34,7 +35,7 @@ const primaryButtonClass =
 
 export const AdminPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'taxonomy' | 'tutorial'>('queue');
+  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'taxonomy' | 'tutorial' | 'video'>('queue');
 
   // Success notifications
   const [notify, setNotify] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -53,6 +54,11 @@ export const AdminPage: React.FC = () => {
   const { data: tutorialDrafts, isLoading: isTutorialDraftsLoading } = useQuery({
     queryKey: ['admin-tutorial-drafts'],
     queryFn: getAdminTutorialDrafts,
+  });
+
+  const { data: videoDrafts, isLoading: isVideoDraftsLoading } = useQuery({
+    queryKey: ['admin-video-drafts'],
+    queryFn: getAdminVideoDrafts,
   });
 
   const { data: categories } = useQuery({
@@ -252,6 +258,51 @@ export const AdminPage: React.FC = () => {
   const handleDeleteTutorial = (tutorialId: string, title: string) => {
     if (window.confirm(`Delete "${title}"? This can't be undone.`)) {
       deleteTutorialMutation.mutate(tutorialId);
+    }
+  };
+
+  const videoIngestMutation = useMutation({
+    mutationFn: triggerVideoIngestion,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-video-drafts'] });
+      if (result.draftsCreated > 0) {
+        showNotification('success', `Fetched ${result.videosFetched} videos, created ${result.draftsCreated} new drafts.`);
+      } else {
+        showNotification('success', `Checked ${result.videosFetched} videos — nothing new (${result.skipped} already seen).`);
+      }
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to run video ingestion.');
+    },
+  });
+
+  const publishVideoMutation = useMutation({
+    mutationFn: publishVideo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-video-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
+      showNotification('success', 'Video published successfully!');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to publish video.');
+    },
+  });
+
+  const deleteVideoMutation = useMutation({
+    mutationFn: deleteVideo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-video-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
+      showNotification('success', 'Video deleted.');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to delete video.');
+    },
+  });
+
+  const handleDeleteVideo = (videoId: string, title: string) => {
+    if (window.confirm(`Delete "${title}"? This can't be undone.`)) {
+      deleteVideoMutation.mutate(videoId);
     }
   };
 
@@ -462,6 +513,20 @@ export const AdminPage: React.FC = () => {
           aria-selected={activeTab === 'tutorial'}
         >
           Tutorials ({tutorialDrafts?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('video')}
+          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
+            activeTab === 'video'
+              ? 'bg-stone-900 text-white shadow-sm'
+              : 'text-stone-500 hover:text-stone-950 hover:bg-stone-50'
+          }`}
+          id="admin-tab-video"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'video'}
+        >
+          Videos ({videoDrafts?.length || 0})
         </button>
       </div>
 
@@ -1152,6 +1217,85 @@ export const AdminPage: React.FC = () => {
             )}
           </div>
 
+        </section>
+      )}
+
+      {/* TAB 6: VIDEOS — YouTube ingestion + review queue */}
+      {activeTab === 'video' && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+            <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400">
+              <PlayCircle className="w-4 h-4" />
+              Video Review Queue
+            </div>
+            <button
+              onClick={() => videoIngestMutation.mutate()}
+              disabled={videoIngestMutation.isPending}
+              className="flex items-center gap-1.5 bg-stone-900 hover:bg-stone-800 disabled:opacity-70 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm cursor-pointer transition-colors whitespace-nowrap"
+            >
+              {videoIngestMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
+              {videoIngestMutation.isPending ? 'Fetching...' : 'Fetch new videos now'}
+            </button>
+          </div>
+          <p className="text-xs text-stone-500 -mt-2">
+            Pulls recent uploads from your configured YouTube channels and writes an AI review for each new one. Add channel IDs in <code className="bg-stone-100 px-1 py-0.5 rounded text-[11px]">YouTube:ChannelIds</code> on the backend first.
+          </p>
+
+          {isVideoDraftsLoading ? (
+            <div className="flex flex-col items-center py-12 gap-3 text-stone-400">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <p className="text-xs">Loading queue items...</p>
+            </div>
+          ) : !videoDrafts || videoDrafts.length === 0 ? (
+            <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center max-w-md mx-auto space-y-3">
+              <CheckSquare className="w-12 h-12 text-emerald-500 mx-auto" />
+              <h3 className="font-serif text-lg font-bold text-stone-800">No video drafts waiting</h3>
+              <p className="text-sm text-stone-500">Click "Fetch new videos now" to check your configured channels.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {videoDrafts.map((draft) => (
+                <div
+                  key={draft.id}
+                  className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-stone-300 transition-colors"
+                >
+                  <div className="flex items-start gap-4 max-w-2xl">
+                    {draft.thumbnailUrl && (
+                      <img src={draft.thumbnailUrl} alt={draft.title} className="w-24 h-16 object-cover rounded-lg border border-stone-200 shrink-0" />
+                    )}
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                        {draft.channelName}
+                      </span>
+                      <h3 className="font-serif text-lg font-bold text-stone-900">{draft.title}</h3>
+                      <p className="text-xs text-stone-600 line-clamp-2">{draft.aiReview}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 self-start md:self-center">
+                    <button
+                      onClick={() => publishVideoMutation.mutate(draft.id)}
+                      disabled={publishVideoMutation.isPending}
+                      className="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-75 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      Approve & Publish
+                    </button>
+                    <button
+                      onClick={() => handleDeleteVideo(draft.id, draft.title)}
+                      disabled={deleteVideoMutation.isPending}
+                      className="bg-white hover:bg-red-50 disabled:opacity-60 text-red-600 border border-red-200 p-2.5 rounded-lg shadow-sm cursor-pointer transition-colors"
+                      title="Delete draft"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
