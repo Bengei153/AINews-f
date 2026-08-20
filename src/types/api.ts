@@ -157,3 +157,25 @@ export interface ApiError {
   detail: string;
   errors?: Record<string, string[]>;
 }
+
+// Stage 6 — Student Showcase. The backend returns the same shape for both
+// the paged list and the single-post detail endpoint, so one type covers
+// both (unlike Article/Tutorial, which have separate Summary/Detail DTOs).
+export interface ShowcasePost {
+  id: string;
+  authorId: string;
+  authorName: string;
+  title: string;
+  description: string;
+  imageUrl: string | null;
+  toolsUsed: string | null;
+  created: string;
+}
+
+// Reaction counts + current user's reaction, identical shape to
+// ArticleReactions — kept as its own type so showcase and article call
+// sites can diverge independently later without a shared-type refactor.
+export interface ShowcaseReactions {
+  counts: Record<ReactionType, number>;
+  currentUserReaction: ReactionType | null;
+}

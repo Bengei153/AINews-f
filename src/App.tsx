@@ -24,6 +24,13 @@ const VideosPage = lazy(() => import('./pages/VideosPage').then((module) => ({ d
 const VideoDetailPage = lazy(() =>
   import('./pages/VideoDetailPage').then((module) => ({ default: module.VideoDetailPage }))
 );
+const ShowcasePage = lazy(() => import('./pages/ShowcasePage').then((module) => ({ default: module.ShowcasePage })));
+const ShowcasePostDetailPage = lazy(() =>
+  import('./pages/ShowcasePostDetailPage').then((module) => ({ default: module.ShowcasePostDetailPage }))
+);
+const ShowcaseNewPostPage = lazy(() =>
+  import('./pages/ShowcaseNewPostPage').then((module) => ({ default: module.ShowcaseNewPostPage }))
+);
 const LoginPage = lazy(() => import('./pages/LoginPage').then((module) => ({ default: module.LoginPage })));
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then((module) => ({ default: module.RegisterPage })));
 const OnboardingPage = lazy(() =>
@@ -71,8 +78,10 @@ export default function App() {
                 <Route path="/tools" element={<ToolsPage />} />
                 <Route path="/tutorials" element={<TutorialsPage />} />
                 <Route path="/tutorials/:slug" element={<TutorialDetailPage />} />
-                <Route path="/videos" element={<VideosPage />} />
+                                <Route path="/videos" element={<VideosPage />} />
                 <Route path="/videos/:slug" element={<VideoDetailPage />} />
+                <Route path="/showcase" element={<ShowcasePage />} />
+                <Route path="/showcase/:showcasePostId" element={<ShowcasePostDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
 
@@ -82,6 +91,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <OnboardingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/showcase/new"
+                  element={
+                    <ProtectedRoute>
+                      <ShowcaseNewPostPage />
                     </ProtectedRoute>
                   }
                 />

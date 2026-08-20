@@ -115,13 +115,21 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             >
               Tutorials
             </Link>
-            <Link
+                        <Link
               to="/videos"
               className={`text-sm font-medium tracking-wide transition-colors ${
                 isActive('/videos') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               Videos
+            </Link>
+            <Link
+              to="/showcase"
+              className={`text-sm font-medium tracking-wide transition-colors ${
+                isActive('/showcase') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              Showcase
             </Link>
             {user && (
               <Link
@@ -265,12 +273,19 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             >
               Tutorials
             </Link>
-            <Link
+                        <Link
               to="/videos"
               onClick={() => setIsMobileMenuOpen(false)}
               className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
             >
               Videos
+            </Link>
+            <Link
+              to="/showcase"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
+            >
+              Showcase
             </Link>
             {user && (
               <Link
