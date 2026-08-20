@@ -319,6 +319,7 @@ export const AdminPage: React.FC = () => {
   const [toolUrl, setToolUrl] = useState('');
   const [toolPricing, setToolPricing] = useState('');
   const [toolTags, setToolTags] = useState('');
+  const [toolLogoUrl, setToolLogoUrl] = useState<string | null>(null);
   const [isCreatingTool, setIsCreatingTool] = useState(false);
 
   const handleCreateTool = async (e: React.FormEvent) => {
@@ -336,7 +337,7 @@ export const AdminPage: React.FC = () => {
         websiteUrl: toolUrl,
         pricing: toolPricing,
         tags: toolTags,
-        logoUrl: null,
+        logoUrl: toolLogoUrl,
       });
       showNotification('success', `AI Tool '${toolName}' added successfully to the directory!`);
       
@@ -347,6 +348,7 @@ export const AdminPage: React.FC = () => {
       setToolUrl('');
       setToolPricing('');
       setToolTags('');
+      setToolLogoUrl(null);
       
       queryClient.invalidateQueries({ queryKey: ['ai-tools'] });
     } catch (err: any) {
@@ -911,6 +913,11 @@ export const AdminPage: React.FC = () => {
                 className={fieldClass}
                 required
               />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-stone-600 block">Logo (optional)</label>
+              <ImageUploadWidget folder="AiToolLogos" currentUrl={toolLogoUrl} onUploaded={(url) => setToolLogoUrl(url || null)} />
             </div>
 
             <div className="flex justify-end pt-4 border-t border-stone-100">

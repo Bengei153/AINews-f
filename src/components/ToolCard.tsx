@@ -35,15 +35,24 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool }) => {
       {/* Title & Description */}
       <div className="flex-1 space-y-3">
         <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-emerald-800 transition-colors leading-tight flex items-center gap-1.5">
-              {tool.name}
-            </h3>
-            
-            {/* Rating Stars */}
-            <div className="flex items-center gap-1 text-amber-500 text-xs font-semibold mt-1">
-              <Star className="w-3.5 h-3.5 fill-amber-500" />
-              <span>{tool.rating.toFixed(1)}</span>
+          <div className="flex items-start gap-3">
+            {tool.logoUrl && (
+              <img
+                src={tool.logoUrl}
+                alt={`${tool.name} logo`}
+                className="w-10 h-10 rounded-lg object-cover border border-stone-200 shrink-0"
+              />
+            )}
+            <div>
+              <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-emerald-800 transition-colors leading-tight flex items-center gap-1.5">
+                {tool.name}
+              </h3>
+
+              {/* Rating Stars */}
+              <div className="flex items-center gap-1 text-amber-500 text-xs font-semibold mt-1">
+                <Star className="w-3.5 h-3.5 fill-amber-500" />
+                <span>{tool.rating.toFixed(1)}</span>
+              </div>
             </div>
           </div>
         </div>
