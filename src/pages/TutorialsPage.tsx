@@ -73,15 +73,18 @@ export const TutorialsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-200 pb-4">
+    <div className="listing-page animate-in fade-in duration-200">
+      <div className="listing-header">
         <div>
-          <h1 className="font-serif text-3xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-            <GraduationCap className="w-8 h-8 text-emerald-800" />
-            Tutorials
+          <div className="section-kicker">
+            <GraduationCap className="w-3.5 h-3.5" />
+            Academic Learning Center
+          </div>
+          <h1 className="editorial-heading editorial-heading--page font-serif">
+            Master the <em>Intelligence</em> economy.
           </h1>
-          <p className="text-sm text-stone-500 mt-1">
-            Straightforward guides on how to actually use AI tools — for whatever tool just came out.
+          <p className="editorial-lede">
+            Structured guides on how to actually use AI tools, from foundations to advanced deployment strategies.
           </p>
         </div>
 
@@ -96,7 +99,7 @@ export const TutorialsPage: React.FC = () => {
         )}
       </div>
 
-      <section className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-4">
+      <section className="listing-controls">
         <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-400">
           <Filter className="w-3.5 h-3.5" />
           Find a tutorial
@@ -106,7 +109,7 @@ export const TutorialsPage: React.FC = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Tool name — e.g. ChatGPT-5"
+              placeholder="Tool name - e.g. ChatGPT-5"
               value={toolQuery}
               onChange={(e) => setToolQuery(e.target.value)}
               className="w-full text-sm pl-9 pr-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-stone-50/50"
@@ -156,7 +159,7 @@ export const TutorialsPage: React.FC = () => {
           <GraduationCap className="w-12 h-12 text-stone-300 mx-auto" />
           <h3 className="font-serif text-lg font-bold text-stone-800">No tutorials yet</h3>
           <p className="text-sm text-stone-500">
-            Check back soon — this section is just getting started.
+            Check back soon - this section is just getting started.
           </p>
         </div>
       ) : (

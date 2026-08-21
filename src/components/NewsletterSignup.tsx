@@ -23,39 +23,39 @@ export const NewsletterSignup: React.FC = () => {
 
   if (subscribeMutation.isSuccess) {
     return (
-      <div className="flex items-center gap-2 text-sm text-emerald-400 font-semibold">
+      <div className="newsletter-success">
         <CheckCircle2 className="w-4 h-4" />
-        You're subscribed — look out for the next issue.
+        You're subscribed. Look out for the next issue.
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
-      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-200">
+    <form onSubmit={handleSubmit} className="newsletter-form">
+      <div className="newsletter-form__label">
         <Mail className="w-3.5 h-3.5" />
         Get AI Brief in your inbox
       </div>
-      <div className="flex gap-2">
+      <div className="newsletter-form__row">
         <input
           type="email"
           required
-          placeholder="you@example.com"
+          placeholder="Enter your professional email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 text-sm px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+          className="newsletter-form__input"
         />
         <button
           type="submit"
           disabled={subscribeMutation.isPending}
-          className="bg-emerald-700 hover:bg-emerald-600 disabled:opacity-70 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-colors whitespace-nowrap"
+          className="newsletter-form__button"
         >
           {subscribeMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Subscribe'}
         </button>
       </div>
       {subscribeMutation.isError && (
         <p className="text-xs text-red-400">
-          {(subscribeMutation.error as any)?.detail || 'Something went wrong — try again.'}
+          {(subscribeMutation.error as any)?.detail || 'Something went wrong - try again.'}
         </p>
       )}
     </form>

@@ -52,14 +52,17 @@ export const VideosPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-200 pb-4">
+    <div className="listing-page animate-in fade-in duration-200">
+      <div className="listing-header">
         <div>
-          <h1 className="font-serif text-3xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-            <PlayCircle className="w-8 h-8 text-emerald-800" />
-            Videos
+          <div className="section-kicker">
+            <PlayCircle className="w-3.5 h-3.5" />
+            Media Hub
+          </div>
+          <h1 className="editorial-heading editorial-heading--page font-serif">
+            Curated <em>Intelligence</em> in Motion.
           </h1>
-          <p className="text-sm text-stone-500 mt-1">
+          <p className="editorial-lede">
             The latest AI videos worth watching, with a quick AI-written review before you press play.
           </p>
         </div>
@@ -75,7 +78,7 @@ export const VideosPage: React.FC = () => {
         )}
       </div>
 
-      <section className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-4">
+      <section className="listing-controls">
         <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-400">
           <Filter className="w-3.5 h-3.5" />
           Find a video
@@ -109,7 +112,7 @@ export const VideosPage: React.FC = () => {
           <PlayCircle className="w-12 h-12 text-stone-300 mx-auto" />
           <h3 className="font-serif text-lg font-bold text-stone-800">No videos yet</h3>
           <p className="text-sm text-stone-500">
-            Check back soon — this section is just getting started.
+            Check back soon - this section is just getting started.
           </p>
         </div>
       ) : (

@@ -14,42 +14,44 @@ interface ShowcaseCardProps {
 
 export const ShowcaseCard: React.FC<ShowcaseCardProps> = ({ post }) => {
   return (
-    <article className="group flex flex-col bg-white border border-stone-200 rounded-xl overflow-hidden hover:shadow-md hover:border-stone-300 transition-all duration-200">
+    <article className="editorial-card content-card group">
       {post.imageUrl ? (
-        <Link to={`/showcase/${post.id}`}>
-          <img src={post.imageUrl} alt={post.title} className="w-full h-40 object-cover" />
+        <Link to={`/showcase/${post.id}`} className="content-card__media">
+          <img src={post.imageUrl} alt={post.title} />
         </Link>
       ) : (
-        <div className="w-full h-40 bg-stone-50 flex items-center justify-center border-b border-stone-100">
-          <Sparkles className="w-8 h-8 text-stone-300" />
+        <div className="content-card__media">
+          <div className="content-card__visual content-card__visual--showcase">
+            <Sparkles className="w-7 h-7" />
+          </div>
         </div>
       )}
 
-      <div className="p-4 flex-1 flex flex-col justify-between">
-        <div className="space-y-2">
+      <div className="content-card__body">
+        <div className="content-card__copy">
           {post.toolsUsed && (
             <Link
               to={`/showcase?tool=${encodeURIComponent(post.toolsUsed)}`}
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-500 hover:text-emerald-700 transition-colors"
+              className="content-card__eyebrow content-card__eyebrow--link"
             >
               <Wrench className="w-3 h-3" />
               {post.toolsUsed}
             </Link>
           )}
           <Link to={`/showcase/${post.id}`} className="block">
-            <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-emerald-800 transition-colors leading-tight">
+            <h3 className="content-card__title font-serif">
               {post.title}
             </h3>
           </Link>
-          <p className="text-sm text-stone-600 line-clamp-3 leading-relaxed">{post.description}</p>
+          <p className="content-card__summary line-clamp-3">{post.description}</p>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-stone-500 pt-4 mt-4 border-t border-stone-100 font-medium">
-          <span className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center justify-center">
+        <div className="content-card__meta">
+          <span className="content-card__author">
+            <span>
               {post.authorName.charAt(0).toUpperCase()}
-            </div>
+            </span>
             {post.authorName}
           </span>
         </div>

@@ -7,32 +7,34 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAiTools } from '../api/aiTools';
 import { ToolCard } from '../components/ToolCard';
-import { Award, Search, Sparkles, AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowRight, Award, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react';
+
+const FACETS = ['All', 'Generative AI', 'Analysis', 'DevOps', 'Creative', 'Research', 'Infrastructure'];
 
 export const ToolsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFacet, setActiveFacet] = useState('All');
 
-  // Fetch full directory of AI tools
   const { data: tools, isLoading } = useQuery({
     queryKey: ['ai-tools'],
-    queryFn: () => getAiTools(false), // Fetch all
+    queryFn: () => getAiTools(false),
   });
 
-  // Client-side search matching against name, tags, and description
   const filteredTools = React.useMemo(() => {
     if (!tools) return [];
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return tools;
+    const facet = activeFacet === 'All' ? '' : activeFacet.toLowerCase();
 
     return tools.filter((tool) => {
       const name = tool.name.toLowerCase();
       const desc = tool.description.toLowerCase();
       const tags = tool.tags.toLowerCase();
-      return name.includes(q) || desc.includes(q) || tags.includes(q);
+      const matchesSearch = !q || name.includes(q) || desc.includes(q) || tags.includes(q);
+      const matchesFacet = !facet || name.includes(facet) || desc.includes(facet) || tags.includes(facet);
+      return matchesSearch && matchesFacet;
     });
-  }, [tools, searchQuery]);
+  }, [tools, searchQuery, activeFacet]);
 
-  // Featured and regular split for visual emphasis
   const { featuredTool, standardTools } = React.useMemo(() => {
     if (!filteredTools) return { featuredTool: undefined, standardTools: [] };
     const featured = filteredTools.find((t) => t.isFeaturedToday);
@@ -41,39 +43,77 @@ export const ToolsPage: React.FC = () => {
   }, [filteredTools]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
-      
-      {/* 1. Page Header */}
-      <div className="border-b border-stone-200 pb-4">
-        <h1 className="font-serif text-3xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-          <Sparkles className="w-8 h-8 text-emerald-800" />
-          AI Directory Spotlight
-        </h1>
-        <p className="text-sm text-stone-500 mt-1">
-          Explore vetted artificial intelligence tools curated for students, developers, and creators.
-        </p>
-      </div>
-
-      {/* 2. Interactive Search Panel */}
-      <section className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-        <div className="relative max-w-md">
-          <input
-            type="text"
-            placeholder="Search by tool name, tags (e.g. coding), or description..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm pl-9 pr-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-stone-50/50"
-            id="tool-search-input"
-          />
-          <Search className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
+    <div className="directory-page animate-in fade-in duration-200">
+      <section className="directory-hero">
+        <div>
+          <div className="section-kicker">
+            <Sparkles className="w-3.5 h-3.5" />
+            Curated Intelligence
+          </div>
+          <h1 className="editorial-heading editorial-heading--page font-serif">
+            AI Directory <em>Spotlight</em>
+          </h1>
+          <p className="editorial-lede">
+            Discover a vetted database of artificial intelligence tools built for students, developers, creators, and technical teams.
+          </p>
+          <div className="hero-stats hero-stats--inline">
+            <div>
+              <strong>120+</strong>
+              <span>Verified tools</span>
+            </div>
+            <div>
+              <strong>1.4k</strong>
+              <span>Weekly submissions</span>
+            </div>
+          </div>
+        </div>
+        <div className="directory-hero__proof">
+          <div>
+            <ShieldCheck className="w-5 h-5" />
+            <span>
+              <strong>Vetted Accuracy</strong>
+              Every entry is checked for practical utility.
+            </span>
+          </div>
+          <div>
+            <Zap className="w-5 h-5" />
+            <span>
+              <strong>Real-time Updates</strong>
+              Pricing and model changes are reviewed frequently.
+            </span>
+          </div>
         </div>
       </section>
 
-      {/* 3. Catalog Display */}
+      <section className="directory-controls">
+        <div className="search-shell">
+          <Search className="w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search by tool name, capability, or tag..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            id="tool-search-input"
+          />
+        </div>
+        <div className="facet-row" role="list" aria-label="Tool categories">
+          {FACETS.map((facet) => (
+            <button
+              key={facet}
+              type="button"
+              onClick={() => setActiveFacet(facet)}
+              className={activeFacet === facet ? 'facet-chip facet-chip--active' : 'facet-chip'}
+            >
+              {facet}
+            </button>
+          ))}
+        </div>
+      </section>
+
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white border border-stone-200 rounded-xl p-6 space-y-4 animate-pulse">
+            <div key={i} className="skeleton-card skeleton-card--tall animate-pulse">
               <div className="w-1/2 h-6 bg-stone-200 rounded"></div>
               <div className="w-full h-16 bg-stone-200 rounded"></div>
               <div className="w-1/3 h-4 bg-stone-200 rounded"></div>
@@ -81,50 +121,86 @@ export const ToolsPage: React.FC = () => {
           ))}
         </div>
       ) : filteredTools.length === 0 ? (
-        <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-4">
-          <AlertCircle className="w-12 h-12 text-stone-300 mx-auto" />
-          <h3 className="font-serif text-lg font-bold text-stone-800">No matching tools found</h3>
-          <p className="text-sm text-stone-500">
-            We couldn't find any curated resources that fit your search query: <span className="font-mono font-bold text-stone-700">"{searchQuery}"</span>.
-          </p>
+        <div className="empty-state empty-state--large">
+          <AlertCircle className="w-12 h-12" />
+          <p>No matching tools found</p>
+          <span>
+            We could not find any curated resources for <strong>{searchQuery || activeFacet}</strong>.
+          </span>
           <button
-            onClick={() => setSearchQuery('')}
-            className="text-xs font-bold bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 rounded-lg"
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setActiveFacet('All');
+            }}
+            className="btn-secondary"
           >
             Clear Search Filter
           </button>
         </div>
       ) : (
-        <div className="space-y-8">
-          
-          {/* Highlight Featured Spotlight first if it matches and search isn't very narrow */}
+        <div className="directory-results">
           {featuredTool && (
-            <section className="space-y-3">
-              <h2 className="text-xs font-bold tracking-wider uppercase text-emerald-800 flex items-center gap-1">
-                <Award className="w-4 h-4" />
-                Featured Tool of the Day
-              </h2>
-              <div className="max-w-2xl">
+            <section className="content-section">
+              <div className="section-heading-row">
+                <h2 className="font-serif">
+                  <Award className="w-5 h-5" />
+                  Featured Tool of the Day
+                </h2>
+              </div>
+              <div className="featured-tool-wrap">
                 <ToolCard tool={featuredTool} />
               </div>
             </section>
           )}
 
-          {/* Directory Grid */}
-          <section className="space-y-4">
-            <h2 className="text-xs font-bold tracking-wider uppercase text-stone-400">
-              Curated Catalog ({standardTools.length} items)
-            </h2>
+          <section className="content-section">
+            <div className="section-heading-row">
+              <h2 className="font-serif">Curated Catalog</h2>
+              <span className="result-count">{standardTools.length} items</span>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {standardTools.map((tool) => (
                 <ToolCard key={tool.id} tool={tool} />
               ))}
             </div>
           </section>
-
         </div>
       )}
 
+      <section className="metric-band">
+        <div>
+          <span>Editorial Trust</span>
+          <strong>100%</strong>
+          <p>Every tool undergoes a testing cycle before listing.</p>
+        </div>
+        <div>
+          <span>Global Reach</span>
+          <strong>25+</strong>
+          <p>Coverage gathered from research hubs worldwide.</p>
+        </div>
+        <div>
+          <span>Freshness Index</span>
+          <strong>Daily</strong>
+          <p>Catalog entries are reviewed for pricing and model shifts.</p>
+        </div>
+        <div>
+          <span>Model Variance</span>
+          <strong>LLM+</strong>
+          <p>Includes language, diffusion, and symbolic reasoning systems.</p>
+        </div>
+      </section>
+
+      <section className="dark-cta-panel dark-cta-panel--center">
+        <h2 className="font-serif">
+          Stay Informed on the <em>Frontier</em>
+        </h2>
+        <p>Join developers receiving our weekly digest of curated tools, benchmark reports, and deployment strategies.</p>
+        <a href="#tool-search-input" className="btn-light">
+          Search the Directory
+          <ArrowRight className="w-4 h-4" />
+        </a>
+      </section>
     </div>
   );
 };

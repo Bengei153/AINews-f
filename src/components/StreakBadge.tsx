@@ -3,31 +3,52 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Flame, Zap } from 'lucide-react';
+import { Flame, Trophy, Zap } from 'lucide-react';
 import { getMyGameProfile, pingDailyActivity } from '../api/gamification';
 import { useAuth } from '../store/authStore';
 
-export const StreakBadge: React.FC = () => {
+type StreakBadgeVariant = 'inline' | 'compact' | 'panel';
+
+interface StreakBadgeProps {
+  variant?: StreakBadgeVariant;
+}
+
+const pingedActivityUsers = new Set<string>();
+
+const formatCompactNumber = (value: number) =>
+  new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
+
+export const StreakBadge: React.FC<StreakBadgeProps> = ({ variant = 'inline' }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [justAwarded, setJustAwarded] = useState<number | null>(null);
+  const userId = user?.id;
 
   const { data: profile } = useQuery({
-    queryKey: ['game-profile'],
+    queryKey: ['game-profile', userId],
     queryFn: getMyGameProfile,
     enabled: !!user,
   });
 
-  // Ping once per mount (effectively once per session/app-load) — the
-  // backend itself is idempotent per UTC day, so this is safe even if the
-  // component remounts (e.g. navigating away and back).
+  const { data: justAwarded = null } = useQuery<number | null>({
+    queryKey: ['game-profile-award', userId],
+    queryFn: async () => null,
+    enabled: false,
+    initialData: null,
+  });
+
+  // Ping once per user per app session. The backend is still idempotent per UTC day.
   useEffect(() => {
-    if (!user) return;
+    if (!userId || pingedActivityUsers.has(userId)) return;
+
+    pingedActivityUsers.add(userId);
     pingDailyActivity()
       .then((result) => {
-        queryClient.setQueryData(['game-profile'], {
+        queryClient.setQueryData(['game-profile', userId], {
           totalXp: result.totalXp,
           currentStreak: result.currentStreak,
           longestStreak: result.longestStreak,
@@ -35,29 +56,66 @@ export const StreakBadge: React.FC = () => {
         });
         if (result.xpAwardedToday) {
           const gained = result.streakBonusAwarded ? 30 : 5; // daily (5) + weekly bonus (25) if both fired
-          setJustAwarded(gained);
-          setTimeout(() => setJustAwarded(null), 4000);
+          queryClient.setQueryData(['game-profile-award', userId], gained);
+          setTimeout(() => queryClient.setQueryData(['game-profile-award', userId], null), 4000);
         }
       })
       .catch(() => {
-        // Non-critical — a failed ping just means the badge shows slightly
-        // stale numbers until the next page load.
+        pingedActivityUsers.delete(userId);
+        // Non-critical. A failed ping just means the badge shows slightly stale numbers.
       });
-  }, [user?.id]);
+  }, [queryClient, userId]);
 
   if (!user || !profile) return null;
 
+  const totalXp = variant === 'compact' ? formatCompactNumber(profile.totalXp) : profile.totalXp.toLocaleString();
+  const badgeTitle = `${profile.currentStreak}-day streak, ${profile.longestStreak}-day best streak, ${profile.totalXp.toLocaleString()} XP`;
+
+  if (variant === 'panel') {
+    return (
+      <section className="streak-panel" title={badgeTitle} aria-label={badgeTitle}>
+        <div className="streak-panel__heading">
+          <span>
+            <Zap className="w-3.5 h-3.5" />
+            Daily progress
+          </span>
+          {justAwarded && <strong>+{justAwarded} XP today</strong>}
+        </div>
+
+        <div className="streak-panel__metrics">
+          <div className="streak-panel__metric streak-panel__metric--streak">
+            <Flame className="w-4 h-4" />
+            <span>Streak</span>
+            <strong>{profile.currentStreak}d</strong>
+          </div>
+          <div className="streak-panel__metric streak-panel__metric--best">
+            <Trophy className="w-4 h-4" />
+            <span>Best</span>
+            <strong>{profile.longestStreak}d</strong>
+          </div>
+          <div className="streak-panel__metric streak-panel__metric--xp">
+            <Zap className="w-4 h-4" />
+            <span>XP</span>
+            <strong>{profile.totalXp.toLocaleString()}</strong>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-2 text-xs font-bold" title={`${profile.longestStreak}-day best streak`}>
-      <div className="flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full">
+    <div className={`streak-badge streak-badge--${variant}`} title={badgeTitle} aria-label={badgeTitle}>
+      <div className="streak-chip streak-chip--streak">
         <Flame className="w-3.5 h-3.5" />
-        {profile.currentStreak}
+        <strong>{profile.currentStreak}</strong>
+        <span>day</span>
       </div>
-      <div className="flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full relative">
+      <div className="streak-chip streak-chip--xp">
         <Zap className="w-3.5 h-3.5" />
-        {profile.totalXp.toLocaleString()}
+        <strong>{totalXp}</strong>
+        <span>XP</span>
         {justAwarded && (
-          <span className="absolute -top-2 -right-2 bg-emerald-600 text-white text-[9px] px-1.5 py-0.5 rounded-full animate-pulse">
+          <span className="streak-award animate-pulse">
             +{justAwarded}
           </span>
         )}

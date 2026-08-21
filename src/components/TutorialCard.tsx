@@ -6,7 +6,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Tutorial, DifficultyLevel } from '../types/api';
-import { Eye, GraduationCap } from 'lucide-react';
+import { Eye, GraduationCap, Layers } from 'lucide-react';
 
 interface TutorialCardProps {
   tutorial: Tutorial;
@@ -20,8 +20,18 @@ const DIFFICULTY_STYLES: Record<DifficultyLevel, string> = {
 
 export const TutorialCard: React.FC<TutorialCardProps> = ({ tutorial }) => {
   return (
-    <article className="group flex flex-col bg-white border border-stone-200 rounded-xl overflow-hidden hover:shadow-md hover:border-stone-300 transition-all duration-200">
-      <div className="p-4 pb-0 flex items-center justify-between">
+    <article className="editorial-card content-card group">
+      <Link to={`/tutorials/${tutorial.slug}`} className="content-card__media" aria-label={tutorial.title}>
+        {tutorial.coverImageUrl ? (
+          <img src={tutorial.coverImageUrl} alt={tutorial.title} />
+        ) : (
+          <div className="content-card__visual content-card__visual--tutorial">
+            <Layers className="w-7 h-7" />
+          </div>
+        )}
+      </Link>
+
+      <div className="content-card__header">
         <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border ${DIFFICULTY_STYLES[tutorial.difficultyLevel]}`}>
           {tutorial.difficultyLevel}
         </span>
@@ -35,19 +45,19 @@ export const TutorialCard: React.FC<TutorialCardProps> = ({ tutorial }) => {
         </Link>
       </div>
 
-      <div className="p-4 flex-1 flex flex-col justify-between">
-        <div className="space-y-2">
+      <div className="content-card__body">
+        <div className="content-card__copy">
           <Link to={`/tutorials/${tutorial.slug}`} className="block">
-            <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-emerald-800 transition-colors leading-tight">
+            <h3 className="content-card__title font-serif">
               {tutorial.title}
             </h3>
           </Link>
-          <p className="text-sm text-stone-600 line-clamp-3 leading-relaxed">{tutorial.summary}</p>
+          <p className="content-card__summary line-clamp-3">{tutorial.summary}</p>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-stone-500 pt-4 mt-4 border-t border-stone-100 font-medium">
+        <div className="content-card__meta">
           <span className="flex items-center gap-1">
-            <Eye className="w-3.5 h-3.5 text-stone-400" />
+            <Eye className="w-3.5 h-3.5" />
             {tutorial.viewCount.toLocaleString()} views
           </span>
         </div>

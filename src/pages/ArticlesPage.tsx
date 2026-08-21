@@ -94,17 +94,23 @@ export const ArticlesPage: React.FC = () => {
     setSearchParams({ ...current, page: String(newPage) });
   };
 
+  const visibleArticles = articlesResult?.items ?? [];
+  const hideArticleImagePlaceholders =
+    visibleArticles.length > 0 && visibleArticles.every((art) => !art.coverImageUrl?.trim());
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
+    <div className="listing-page animate-in fade-in duration-200">
       
-      {/* 1. Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-200 pb-4">
+      <div className="listing-header">
         <div>
-          <h1 className="font-serif text-3xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-            <BookOpen className="w-8 h-8 text-emerald-800" />
-            Curated Briefings Directory
+          <div className="section-kicker">
+            <BookOpen className="w-3.5 h-3.5" />
+            Editorial Feed
+          </div>
+          <h1 className="editorial-heading editorial-heading--page font-serif">
+            Browse <em>Intelligence.</em>
           </h1>
-          <p className="text-sm text-stone-500 mt-1">
+          <p className="editorial-lede">
             Browse published digests of technical breakthroughs, reviews, and workflows.
           </p>
         </div>
@@ -120,8 +126,7 @@ export const ArticlesPage: React.FC = () => {
         )}
       </div>
 
-      {/* 2. Filters Grid panel */}
-      <section className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-4">
+      <section className="listing-controls">
         <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-400">
           <Filter className="w-3.5 h-3.5" />
           Refine intelligence search
@@ -208,7 +213,7 @@ export const ArticlesPage: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : !articlesResult?.items || articlesResult.items.length === 0 ? (
+      ) : visibleArticles.length === 0 ? (
         <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-4">
           <BookOpen className="w-12 h-12 text-stone-300 mx-auto" />
           <h3 className="font-serif text-lg font-bold text-stone-800">No matching briefings found</h3>
@@ -227,8 +232,12 @@ export const ArticlesPage: React.FC = () => {
           
           {/* Main Grid list */}
           <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity ${isPlaceholderData ? 'opacity-60' : 'opacity-100'}`}>
-            {articlesResult.items.map((art) => (
-              <ArticleCard key={art.id} article={art} />
+            {visibleArticles.map((art) => (
+              <ArticleCard
+                key={art.id}
+                article={art}
+                hideMissingImagePlaceholder={hideArticleImagePlaceholders}
+              />
             ))}
           </div>
 

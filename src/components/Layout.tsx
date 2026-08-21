@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../store/authStore';
-import { Sparkles, Bookmark, LogOut, Menu, X, ShieldAlert, Sliders, Moon, Sun } from 'lucide-react';
+import { Sparkles, Bookmark, LogOut, Menu, X, ShieldAlert, Sliders, Moon, Sun, ArrowUpRight } from 'lucide-react';
 import { NewsletterSignup } from './NewsletterSignup';
 import { StreakBadge } from './StreakBadge';
 
@@ -39,170 +39,131 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     navigate('/login');
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path));
   const isDark = theme === 'dark';
+
+  const navItems = [
+    { to: '/', label: 'Home' },
+    { to: '/articles', label: 'Browse Articles' },
+    { to: '/tools', label: 'AI Directory' },
+    { to: '/tutorials', label: 'Tutorials' },
+    { to: '/videos', label: 'Videos' },
+    { to: '/showcase', label: 'Showcase' },
+  ];
 
   const ThemeToggle = ({ compact = false }: { compact?: boolean }) => (
     <button
       type="button"
       onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
-      className={`${
-        compact ? 'h-10 w-10' : 'h-9 w-9'
-      } flex items-center justify-center rounded-md border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors`}
+      className={`theme-toggle ${compact ? 'theme-toggle--compact' : ''}`}
       title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
       aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
     >
-      {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
     </button>
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-stone-900 font-sans antialiased">
-      {/* Dynamic Top Banner */}
-      <div className="bg-stone-900 text-stone-100 text-xs py-2 px-3 sm:px-6 text-center tracking-wider font-semibold uppercase flex items-center justify-center gap-2 leading-tight">
-        <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+    <div className="editorial-shell font-sans antialiased">
+      <div className="site-topbar">
+        <Sparkles className="w-3.5 h-3.5" />
         <span>Stay Ahead: Curated intelligence on model architecture, automation, and tech policy</span>
       </div>
 
-      {/* Main Header Navbar */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-stone-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          
-          {/* Logo & Brand */}
-          <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex flex-col select-none group">
-            <div className="flex items-center gap-1.5">
-              <span className="font-serif text-2xl font-black tracking-tight text-stone-900">
-                AI <span className="text-emerald-700">Brief</span>
+      <header className="site-header">
+        <div className="site-header__inner">
+          <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="brand-lockup select-none">
+            <span className="brand-mark" aria-hidden="true">
+              <Sparkles className="w-4 h-4" />
+            </span>
+            <span>
+              <span className="brand-name font-serif">
+                AI <span>Brief</span>
               </span>
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 self-end mb-1"></div>
-            </div>
-            <span className="text-[10px] tracking-widest uppercase text-stone-500 font-bold group-hover:text-emerald-700 transition-colors">
+              <span className="brand-tagline">
               Learn. Use. Stay Ahead.
+              </span>
             </span>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
-              to="/"
-              className={`text-sm font-medium tracking-wide transition-colors ${
-                isActive('/') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              Home
-            </Link>
-            <Link
-              to="/articles"
-              className={`text-sm font-medium tracking-wide transition-colors ${
-                isActive('/articles') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              Browse Articles
-            </Link>
-            <Link
-              to="/tools"
-              className={`text-sm font-medium tracking-wide transition-colors ${
-                isActive('/tools') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              AI Directory
-            </Link>
-            <Link
-              to="/tutorials"
-              className={`text-sm font-medium tracking-wide transition-colors ${
-                isActive('/tutorials') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              Tutorials
-            </Link>
-                        <Link
-              to="/videos"
-              className={`text-sm font-medium tracking-wide transition-colors ${
-                isActive('/videos') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              Videos
-            </Link>
-            <Link
-              to="/showcase"
-              className={`text-sm font-medium tracking-wide transition-colors ${
-                isActive('/showcase') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              Showcase
-            </Link>
+          <nav className="desktop-nav" aria-label="Primary navigation">
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`nav-link ${isActive(item.to) ? 'nav-link--active' : ''}`}
+              >
+                {item.label}
+              </Link>
+            ))}
             {user && (
               <Link
                 to="/bookmarks"
-                className={`text-sm font-medium tracking-wide flex items-center gap-1.5 transition-colors ${
-                  isActive('/bookmarks') ? 'text-emerald-800 font-semibold' : 'text-stone-600 hover:text-stone-900'
-                }`}
+                className={`nav-link nav-link--icon ${isActive('/bookmarks') ? 'nav-link--active' : ''}`}
               >
-                <Bookmark className="w-4 h-4 text-stone-400" />
+                <Bookmark className="w-3.5 h-3.5" />
                 Bookmarks
               </Link>
             )}
           </nav>
 
-          {/* Desktop Action Widgets */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="desktop-actions">
             <StreakBadge />
             <ThemeToggle />
             {user ? (
-              <div className="flex items-center gap-3">
+              <div className="account-cluster">
                 {user.role === 'Admin' && (
                   <Link
                     to="/admin"
-                    className="flex items-center gap-1 bg-stone-900 text-stone-50 text-xs px-3 py-1.5 rounded-md font-bold tracking-wider uppercase hover:bg-emerald-800 transition-colors border border-stone-800"
+                    className="admin-chip"
                     id="admin-dashboard-btn"
                   >
-                    <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                    <ShieldAlert className="w-3.5 h-3.5" />
                     Admin Area
                   </Link>
                 )}
 
                 <Link
                   to="/settings"
-                  className="flex items-center gap-1.5 text-stone-700 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 py-1.5 px-3 rounded-md text-xs font-semibold"
+                  className="utility-chip"
                   title="Interests settings"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-stone-500" />
+                  <Sliders className="w-3.5 h-3.5" />
                   Interests
                 </Link>
 
-                <div className="h-6 w-px bg-stone-200"></div>
-
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center">
-                    <span className="text-xs font-bold text-emerald-800 uppercase">
+                <div className="account-pill">
+                  <div className="account-avatar">
+                    <span>
                       {user.fullName.substring(0, 2)}
                     </span>
                   </div>
-                  <div className="text-left">
-                    <p className="text-xs font-bold leading-tight text-stone-800">{user.fullName}</p>
-                    <p className="text-[10px] leading-tight text-stone-500 capitalize">{user.role}</p>
+                  <div>
+                    <p>{user.fullName}</p>
+                    <span>{user.role}</span>
                   </div>
                 </div>
 
                 <button
                   onClick={handleLogout}
-                  className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                  className="icon-button icon-button--danger"
                   title="Sign Out"
+                  type="button"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="auth-actions">
                 <Link
                   to="/login"
-                  className="text-sm font-medium text-stone-600 hover:text-stone-900 py-2 px-3 rounded-md"
+                  className="auth-link"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white py-2 px-4 rounded-md tracking-wide shadow-sm"
+                  className="btn-primary btn-primary--small"
                 >
                   Register
                 </Link>
@@ -210,13 +171,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             )}
           </div>
 
-          {/* Mobile Hamburger Menu */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="mobile-actions">
+            {user && <StreakBadge variant="compact" />}
             <ThemeToggle compact />
             {user && user.role === 'Admin' && (
               <Link
                 to="/admin"
-                className="h-9 w-9 bg-stone-950 text-amber-400 rounded-md flex items-center justify-center"
+                className="icon-button"
                 title="Admin dashboard"
                 aria-label="Admin dashboard"
               >
@@ -225,7 +186,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             )}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="h-10 w-10 text-stone-700 hover:bg-stone-100 rounded-md flex items-center justify-center"
+              className="icon-button icon-button--large"
               id="mobile-menu-toggle"
               type="button"
               aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
@@ -238,85 +199,54 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </div>
       </header>
 
-      {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-30 bg-stone-900/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
+        <div className="mobile-drawer-backdrop" onClick={() => setIsMobileMenuOpen(false)}>
           <div 
-            className="absolute top-16 right-0 left-0 bg-white border-b border-stone-200 px-4 py-5 shadow-xl flex flex-col gap-3 animate-in fade-in slide-in-from-top-4 duration-150"
+            className="mobile-drawer animate-in fade-in slide-in-from-top-4 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
-            <Link
-              to="/"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
-            >
-              Home
-            </Link>
-            <Link
-              to="/articles"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
-            >
-              Browse Articles
-            </Link>
-            <Link
-              to="/tools"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
-            >
-              AI Directory
-            </Link>
-            <Link
-              to="/tutorials"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
-            >
-              Tutorials
-            </Link>
-                        <Link
-              to="/videos"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
-            >
-              Videos
-            </Link>
-            <Link
-              to="/showcase"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md"
-            >
-              Showcase
-            </Link>
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`mobile-nav-link ${isActive(item.to) ? 'mobile-nav-link--active' : ''}`}
+              >
+                {item.label}
+              </Link>
+            ))}
             {user && (
               <Link
                 to="/bookmarks"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-base font-medium py-2.5 px-3 hover:bg-stone-50 rounded-md flex items-center gap-2"
+                className={`mobile-nav-link ${isActive('/bookmarks') ? 'mobile-nav-link--active' : ''}`}
               >
-                <Bookmark className="w-4 h-4 text-stone-400" />
+                <Bookmark className="w-4 h-4" />
                 Bookmarks
               </Link>
             )}
             
-            <hr className="border-stone-100" />
+            <hr className="drawer-rule" />
 
             {user ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3 px-3">
-                  <div className="w-9 h-9 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center font-bold text-emerald-800 uppercase">
+              <div className="drawer-account">
+                <div className="account-pill account-pill--drawer">
+                  <div className="account-avatar">
                     {user.fullName.substring(0, 2)}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-stone-800">{user.fullName}</p>
-                    <p className="text-xs text-stone-500 capitalize">{user.role}</p>
+                    <p>{user.fullName}</p>
+                    <span>{user.role}</span>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <StreakBadge variant="panel" />
+
+                <div className="drawer-actions">
                   <Link
                     to="/settings"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex-1 text-center text-xs font-semibold py-2.5 bg-stone-100 hover:bg-stone-200 rounded-md flex items-center justify-center gap-1.5"
+                    className="btn-secondary btn-secondary--small"
                   >
                     <Sliders className="w-3.5 h-3.5" />
                     Interests Settings
@@ -326,7 +256,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       setIsMobileMenuOpen(false);
                       handleLogout();
                     }}
-                    className="flex-1 text-center text-xs font-bold py-2.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-md flex items-center justify-center gap-1.5"
+                    className="btn-danger btn-danger--small"
+                    type="button"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     Sign Out
@@ -334,18 +265,18 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="drawer-actions drawer-actions--stack">
                 <Link
                   to="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-center py-2.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-800 font-semibold rounded-md"
+                  className="btn-secondary btn-secondary--small"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-center py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-md"
+                  className="btn-primary btn-primary--small"
                 >
                   Register
                 </Link>
@@ -355,59 +286,53 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </div>
       )}
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="editorial-main">
         {children}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-stone-900 text-stone-400 mt-auto border-t border-stone-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            
-            {/* Branding Column */}
-            <div className="md:col-span-2 space-y-4">
-              <span className="font-serif text-xl font-black tracking-tight text-white">
-                AI <span className="text-emerald-400">Brief</span>
+      <footer className="site-footer">
+        <div className="site-footer__inner">
+          <div className="footer-grid">
+            <div className="footer-brand">
+              <span className="brand-name brand-name--footer font-serif">
+                AI <span>Brief</span>
               </span>
-              <p className="text-sm text-stone-400 max-w-sm leading-relaxed">
+              <p>
                 Empowering students, developers, and professionals to decode modern technology breakthroughs, optimize workflows with curated tools, and stay ahead.
               </p>
               <NewsletterSignup />
             </div>
 
-            {/* Quick Links Column */}
-            <div>
-              <h3 className="text-xs font-bold tracking-wider uppercase text-stone-200 mb-4">Read Content</h3>
-              <ul className="space-y-2 text-sm">
-                <li><Link to="/articles" className="hover:text-emerald-400 transition-colors">Latest News</Link></li>
-                <li><Link to="/articles?pillar=AIForStudents" className="hover:text-emerald-400 transition-colors">AI for Students</Link></li>
-                <li><Link to="/articles?pillar=AIForWork" className="hover:text-emerald-400 transition-colors">AI for Professionals</Link></li>
-                <li><Link to="/tools" className="hover:text-emerald-400 transition-colors">Featured Spotlight</Link></li>
+            <div className="footer-links">
+              <h3>Read Content</h3>
+              <ul>
+                <li><Link to="/articles">Latest News</Link></li>
+                <li><Link to="/articles?pillar=AIForStudents">AI for Students</Link></li>
+                <li><Link to="/articles?pillar=AIForWork">AI for Professionals</Link></li>
+                <li><Link to="/tools">Featured Spotlight</Link></li>
               </ul>
             </div>
 
-            {/* Legal / Metadata Column */}
-            <div>
-              <h3 className="text-xs font-bold tracking-wider uppercase text-stone-200 mb-4">Secure Gateway</h3>
-              <p className="text-xs leading-relaxed text-stone-500 mb-2">
+            <div className="footer-links">
+              <h3>Secure Gateway</h3>
+              <p>
                 All communications transit securely using standardized JSON Web Tokens (JWT) and persistent state management.
               </p>
-              <div className="flex gap-4 text-xs font-semibold text-emerald-400">
+              <div className="footer-status">
                 <span>PostgreSQL Connected</span>
                 <span>JWT Auth Live</span>
               </div>
             </div>
-
           </div>
 
-          <div className="border-t border-stone-800 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-stone-500">
+          <div className="footer-bottom">
+            <p>
               &copy; {new Date().getFullYear()} AI Brief. Curated content under Clean Architecture. All rights reserved.
             </p>
-            <div className="flex items-center gap-2 text-xs text-stone-500 font-serif italic">
-              <span>"Learn AI. Use AI. Stay Ahead."</span>
-            </div>
+            <Link to="/tools" className="footer-link-cta">
+              Explore the directory
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </footer>

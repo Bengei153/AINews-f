@@ -70,15 +70,18 @@ export const ShowcasePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-200 pb-4">
+    <div className="listing-page animate-in fade-in duration-200">
+      <div className="listing-header">
         <div>
-          <h1 className="font-serif text-3xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-emerald-800" />
-            Student Showcase
+          <div className="section-kicker">
+            <Sparkles className="w-3.5 h-3.5" />
+            Community Gallery
+          </div>
+          <h1 className="editorial-heading editorial-heading--page font-serif">
+            Engineering the <em>Future Canvas.</em>
           </h1>
-          <p className="text-sm text-stone-500 mt-1">
-            Projects the community built with AI — see what's possible, and share your own.
+          <p className="editorial-lede">
+            Projects the community built with AI. See what is possible, and share your own.
           </p>
         </div>
 
@@ -111,7 +114,7 @@ export const ShowcasePage: React.FC = () => {
         </div>
       </div>
 
-      <section className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-4">
+      <section className="listing-controls">
         <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-400">
           <Filter className="w-3.5 h-3.5" />
           Find a project
@@ -121,7 +124,7 @@ export const ShowcasePage: React.FC = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Tool used — e.g. Claude, Midjourney"
+              placeholder="Tool used - e.g. Claude, Midjourney"
               value={toolQuery}
               onChange={(e) => setToolQuery(e.target.value)}
               className="w-full text-sm pl-9 pr-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-stone-50/50"

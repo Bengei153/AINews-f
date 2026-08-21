@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { AITool } from '../types/api';
-import { ExternalLink, Star, Award, DollarSign } from 'lucide-react';
+import { ExternalLink, Star, Award, DollarSign, Sparkles } from 'lucide-react';
 
 interface ToolCardProps {
   tool: AITool;
@@ -16,68 +16,63 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool }) => {
 
   return (
     <div
-      className={`relative flex flex-col bg-white border rounded-xl p-5 overflow-hidden transition-all duration-200 ${
-        tool.isFeaturedToday
-          ? 'border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-          : 'border-stone-200 hover:shadow-md hover:border-stone-300'
-      }`}
+      className={`tool-card editorial-card ${tool.isFeaturedToday ? 'tool-card--featured' : ''}`}
       id={`tool-card-${tool.id}`}
     >
-      
-      {/* Featured Badge */}
       {tool.isFeaturedToday && (
-        <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-bl-lg flex items-center gap-1 shadow-sm">
+        <div className="tool-card__spotlight">
           <Award className="w-3.5 h-3.5" />
-          Featured Spotlight
+          Spotlight
         </div>
       )}
 
-      {/* Title & Description */}
-      <div className="flex-1 space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3">
+      <div className="tool-card__body">
+        <div className="tool-card__header">
+          <div className="tool-card__identity">
             {tool.logoUrl && (
               <img
                 src={tool.logoUrl}
                 alt={`${tool.name} logo`}
-                className="w-10 h-10 rounded-lg object-cover border border-stone-200 shrink-0"
+                className="tool-card__logo"
               />
             )}
+            {!tool.logoUrl && (
+              <div className="tool-card__logo tool-card__logo--fallback" aria-hidden="true">
+                <Sparkles className="w-4 h-4" />
+              </div>
+            )}
             <div>
-              <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-emerald-800 transition-colors leading-tight flex items-center gap-1.5">
+              <h3 className="tool-card__title font-serif">
                 {tool.name}
               </h3>
 
-              {/* Rating Stars */}
-              <div className="flex items-center gap-1 text-amber-500 text-xs font-semibold mt-1">
-                <Star className="w-3.5 h-3.5 fill-amber-500" />
+              <div className="tool-card__rating">
+                <Star className="w-3.5 h-3.5" />
                 <span>{tool.rating.toFixed(1)}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <p className="text-sm text-stone-600 leading-relaxed">
+        <p className="tool-card__description">
           {tool.description}
         </p>
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5 pt-1">
+        <div className="tool-card__tags">
           {tagsList.map((tag) => (
             <span
               key={tag}
-              className="text-[10px] font-bold bg-stone-100 text-stone-600 px-2.5 py-0.5 rounded-md"
+              className="tool-card__tag"
             >
-              #{tag}
+              {tag}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Pricing & Outbound Link */}
-      <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between text-xs font-semibold text-stone-500">
-        <div className="flex items-center gap-1 text-stone-700 bg-stone-50 border border-stone-200 py-1 px-2 rounded-md">
-          <DollarSign className="w-3.5 h-3.5 text-stone-400" />
+      <div className="tool-card__footer">
+        <div className="tool-card__price">
+          <DollarSign className="w-3.5 h-3.5" />
           <span>{tool.pricing}</span>
         </div>
 
@@ -85,9 +80,9 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool }) => {
           href={tool.websiteUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-emerald-800 hover:text-emerald-950 font-bold hover:underline transition-colors py-1 px-2"
+          className="tool-card__link"
         >
-          <span>Visit Website</span>
+          <span>Visit</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
       </div>

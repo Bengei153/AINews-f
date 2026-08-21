@@ -11,6 +11,7 @@ import { useAuth } from '../store/authStore';
 
 interface ArticleCardProps {
   article: Article;
+  hideMissingImagePlaceholder?: boolean;
 }
 
 const PILLAR_STYLES: Record<ArticlePillar, { badge: string; text: string }> = {
@@ -36,7 +37,7 @@ const PILLAR_STYLES: Record<ArticlePillar, { badge: string; text: string }> = {
   },
 };
 
-export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
+export const ArticleCard: React.FC<ArticleCardProps> = ({ article, hideMissingImagePlaceholder = false }) => {
   const { user, bookmarks, toggleBookmark } = useAuth();
 
   const isBookmarked = bookmarks.some((b) => b.articleId === article.id);
@@ -60,6 +61,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
     text: article.pillar,
   };
 
+  const coverImageUrl = article.coverImageUrl?.trim();
+  const visualClass = `content-card__visual content-card__visual--${article.pillar}`;
+  const shouldRenderMedia = Boolean(coverImageUrl) || !hideMissingImagePlaceholder;
+
   const formattedDate = new Date(article.publishedOn).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -68,12 +73,22 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
 
   return (
     <article 
-      className="group flex flex-col bg-white border border-stone-200 rounded-xl overflow-hidden hover:shadow-md hover:border-stone-300 transition-all duration-200 relative"
+      className={`editorial-card content-card group relative ${shouldRenderMedia ? '' : 'content-card--medialess'}`}
       id={`article-card-${article.id}`}
     >
-      
-      {/* Pillar Badge & Bookmarking Action */}
-      <div className="p-4 pb-0 flex items-center justify-between">
+      {shouldRenderMedia && (
+        <Link to={`/articles/${article.slug}`} className="content-card__media" aria-label={article.title}>
+          {coverImageUrl ? (
+            <img src={coverImageUrl} alt={article.title} />
+          ) : (
+            <div className={visualClass}>
+              <Sparkles className="w-7 h-7" />
+            </div>
+          )}
+        </Link>
+      )}
+
+      <div className="content-card__header">
         <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border ${pillarStyle.badge}`}>
           {pillarStyle.text}
         </span>
@@ -86,28 +101,27 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
               : 'bg-stone-50 text-stone-400 hover:text-stone-700 hover:bg-stone-100'
           }`}
           title={isBookmarked ? 'Remove Bookmark' : 'Add Bookmark'}
+          type="button"
         >
           <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-500' : ''}`} />
         </button>
       </div>
 
-      {/* Title & Summary */}
-      <div className="p-4 flex-1 flex flex-col justify-between">
-        <div className="space-y-2">
+      <div className="content-card__body">
+        <div className="content-card__copy">
           <Link to={`/articles/${article.slug}`} className="block">
-            <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-emerald-800 transition-colors leading-tight">
+            <h3 className="content-card__title font-serif">
               {article.title}
             </h3>
           </Link>
-          <p className="text-sm text-stone-600 line-clamp-3 leading-relaxed">
+          <p className="content-card__summary line-clamp-3">
             {article.summary}
           </p>
         </div>
 
-        {/* Read Time & Published Date */}
-        <div className="flex items-center justify-between text-xs text-stone-500 pt-4 mt-4 border-t border-stone-100 font-medium">
+        <div className="content-card__meta">
           <div className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-stone-400" />
+            <Clock className="w-3.5 h-3.5" />
             <span>{article.readTimeMinutes} min read</span>
           </div>
           <span>{formattedDate}</span>
