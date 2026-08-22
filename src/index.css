@@ -1038,6 +1038,17 @@ button, input, select, textarea { font: inherit; }
 
 .icon-button--danger:hover { color: #dc2626; }
 
+.icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.icon-button:disabled:hover {
+  border-color: var(--line-soft);
+  background: var(--surface-card);
+  color: var(--ink-body);
+}
+
 .admin-chip,
 .utility-chip,
 .auth-link {
@@ -2546,3 +2557,156 @@ button, input, select, textarea { font: inherit; }
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   Shared form field (used outside the admin area's raw fieldClass inputs —
+   e.g. Showcase's "share your project" form and comment composer)
+   ========================================================================== */
+.form-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--ink-body);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form-field {
+  width: 100%;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.5rem;
+  background: var(--surface-soft);
+  color: var(--ink-strong);
+  padding: 0.65rem 0.85rem;
+  font-size: 0.86rem;
+  outline: 0;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.form-field::placeholder { color: var(--ink-muted); }
+
+.form-field:focus {
+  border-color: var(--brand-green);
+  box-shadow: 0 0 0 3px var(--brand-green-soft);
+}
+
+textarea.form-field { resize: vertical; }
+
+/* ==========================================================================
+   Reaction bar (article + showcase reactions)
+   ========================================================================== */
+.reaction-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: var(--surface-card);
+  color: var(--ink-body);
+  padding: 0.5rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.reaction-chip:hover { border-color: var(--line-strong); }
+.reaction-chip:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.reaction-chip--active {
+  background: var(--brand-green-soft);
+  border-color: var(--brand-green);
+  color: var(--brand-green);
+}
+
+.reaction-chip__count { color: var(--ink-muted); }
+.reaction-chip--active .reaction-chip__count { color: var(--brand-green); }
+
+/* ==========================================================================
+   Comment thread (article + showcase comments)
+   ========================================================================== */
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-card);
+  border-radius: 0.65rem;
+  padding: 1.1rem;
+}
+
+.comment-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.comment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-card);
+  border-radius: 0.65rem;
+  padding: 1rem;
+}
+
+.comment-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.comment-item__author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink-strong);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.comment-item__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--brand-green-soft);
+  color: var(--brand-green);
+  font-size: 0.66rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.comment-item__date { color: var(--ink-muted); font-size: 0.62rem; }
+
+.comment-item__body {
+  color: var(--ink-body);
+  font-size: 0.85rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.comment-item__image {
+  max-width: 18rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--line-soft);
+}
+
+.comment-item__delete {
+  color: var(--ink-muted);
+  transition: color 150ms ease;
+  cursor: pointer;
+}
+
+.comment-item__delete:hover { color: #dc2626; }

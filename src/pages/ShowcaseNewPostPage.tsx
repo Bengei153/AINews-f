@@ -48,19 +48,22 @@ export const ShowcaseNewPostPage: React.FC = () => {
         Back to Showcase
       </Link>
 
-      <div className="space-y-1">
-        <h1 className="font-serif text-3xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-          <Sparkles className="w-8 h-8 text-emerald-800" />
+      <div>
+        <div className="section-kicker">
+          <Sparkles className="w-3.5 h-3.5" />
+          Share your work
+        </div>
+        <h1 className="editorial-heading editorial-heading--page font-serif" style={{ fontSize: 'clamp(1.9rem, 3.4vw, 2.8rem)' }}>
           Share your project
         </h1>
-        <p className="text-sm text-stone-500">
+        <p className="editorial-lede">
           Tell the community what you built and which AI tools helped you build it.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white border border-stone-200 rounded-2xl p-6 space-y-5 shadow-sm">
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">Title</label>
+      <form onSubmit={handleSubmit} className="sidebar-panel space-y-5">
+        <div>
+          <label className="form-label">Title</label>
           <input
             type="text"
             value={title}
@@ -68,36 +71,37 @@ export const ShowcaseNewPostPage: React.FC = () => {
             placeholder="e.g. A study-buddy chatbot for my chemistry class"
             maxLength={200}
             required
-            className="w-full text-sm px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-stone-50/50"
+            className="form-field"
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">Description</label>
+        <div>
+          <label className="form-label">Description</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What does it do? What was the hardest part? What would you tell someone trying this themselves?"
             maxLength={3000}
             required
-            className="w-full text-sm px-3 py-2 border border-stone-200 rounded-lg h-40 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-stone-50/50"
+            className="form-field"
+            style={{ height: '10rem' }}
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">Tools used <span className="text-stone-400 normal-case font-medium">(optional)</span></label>
+        <div>
+          <label className="form-label">Tools used <span className="normal-case font-medium text-stone-400">(optional)</span></label>
           <input
             type="text"
             value={toolsUsed}
             onChange={(e) => setToolsUsed(e.target.value)}
             placeholder="e.g. Claude, Cursor, Midjourney"
             maxLength={300}
-            className="w-full text-sm px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-stone-50/50"
+            className="form-field"
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-stone-500">Cover image <span className="text-stone-400 normal-case font-medium">(optional)</span></label>
+        <div>
+          <label className="form-label">Cover image <span className="normal-case font-medium text-stone-400">(optional)</span></label>
           <ImageUploadWidget folder="ShowcasePosts" currentUrl={imageUrl} onUploaded={(url) => setImageUrl(url || null)} />
         </div>
 
@@ -107,7 +111,7 @@ export const ShowcaseNewPostPage: React.FC = () => {
           <button
             type="submit"
             disabled={createMutation.isPending || !title.trim() || !description.trim()}
-            className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white text-xs font-bold px-5 py-2.5 rounded-lg cursor-pointer transition-colors"
+            className="btn-primary"
           >
             {createMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             Publish project
