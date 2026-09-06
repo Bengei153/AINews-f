@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { getTutorials } from '../api/tutorials';
 import { TutorialCard } from '../components/TutorialCard';
+import { LearningNavTabs } from '../components/LearningNavTabs';
 import { DifficultyLevel } from '../types/api';
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 
@@ -75,7 +76,8 @@ export const TutorialsPage: React.FC = () => {
   return (
     <div className="listing-page animate-in fade-in duration-200">
       <div className="listing-header">
-        <div>
+        <div className="space-y-3">
+          <LearningNavTabs />
           <div className="section-kicker">
             <GraduationCap className="w-3.5 h-3.5" />
             Academic Learning Center

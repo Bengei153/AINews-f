@@ -84,6 +84,51 @@ export interface VideoDetail extends Video {
   sourceUrl: string;
 }
 
+export type CoursePricingType = 'Free' | 'Paid';
+
+export interface CourseCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+}
+
+// Discovered by AI (web search) rather than authored on the platform —
+// external courses the site links out to, never hosted in-app. Same shape
+// covers the paged list and the single-course detail endpoint.
+export interface Course {
+  id: string;
+  title: string;
+  slug: string;
+  provider: string;
+  courseCategoryId: string;
+  courseCategoryName: string;
+  topic: string;
+  description: string;
+  thumbnailUrl: string | null;
+  externalUrl: string;
+  pricingType: CoursePricingType;
+  price: string | null;
+  publishedOn: string | null;
+}
+
+// --- AI provider settings (admin) ---
+
+export type AiProvider = 'Anthropic' | 'Gemini' | 'OpenAI' | 'Kimi';
+export type AiTask = 'ArticleWriting' | 'VideoReview';
+
+export interface AiTaskModelConfig {
+  task: AiTask;
+  provider: AiProvider;
+  model: string | null;
+  isDefault: boolean;
+}
+
+export interface ArticleWritingTemplate {
+  promptTemplate: string;
+  isDefault: boolean;
+}
+
 export interface PaginatedResult<T> {
   items: T[];
   pageNumber: number;

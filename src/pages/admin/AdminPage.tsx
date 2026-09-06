@@ -13,10 +13,12 @@ import { getAdminDrafts, createArticle, publishArticle, deleteArticle, triggerNe
 import { sendNewsletterNow } from '../../api/newsletter';
 import { getAdminTutorialDrafts, createTutorial, publishTutorial, deleteTutorial } from '../../api/tutorials';
 import { getAdminVideoDrafts, publishVideo, deleteVideo, triggerVideoIngestion } from '../../api/videos';
-import { getShowcasePosts, deleteShowcasePost, getShowcaseComments, deleteShowcaseComment } from '../../api/showcase';
+import { getAdminCourseDrafts, discoverCourses, publishCourse, deleteCourse } from '../../api/courses';
+import { getCourseCategories, createCourseCategory, deleteCourseCategory } from '../../api/courseCategories';
+import { getAiTaskConfigs, setAiTaskConfig, getArticleWritingTemplate, updateArticleWritingTemplate } from '../../api/aiSettings';
 import { ImageUploadWidget } from '../../components/ImageUploadWidget';
-import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap, Trash2, PlayCircle, ChevronLeft, ChevronRight, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { DifficultyLevel } from '../../types/api';
+import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap, Trash2, PlayCircle, Search, Cpu } from 'lucide-react';
+import { DifficultyLevel, AiProvider, AiTask } from '../../types/api';
 
 const PILLARS: { value: ArticlePillar; label: string }[] = [
   { value: 'AIForStudents', label: 'AI for Students' },
@@ -36,7 +38,7 @@ const primaryButtonClass =
 
 export const AdminPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'taxonomy' | 'tutorial' | 'video' | 'showcase'>('queue');
+  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'taxonomy' | 'tutorial' | 'video' | 'course' | 'ai-settings'>('queue');
 
   // Success notifications
   const [notify, setNotify] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -307,66 +309,157 @@ export const AdminPage: React.FC = () => {
     }
   };
 
-  // G. Showcase moderation — posts have no draft/review workflow (they
-  // publish immediately), so this is a browse-and-remove list rather than
-  // an approval queue.
-  const [showcasePageNumber, setShowcasePageNumber] = useState(1);
-
-  const { data: showcasePostsResult, isLoading: isShowcaseLoading } = useQuery({
-    queryKey: ['admin-showcase-posts', showcasePageNumber],
-    queryFn: () => getShowcasePosts({ pageNumber: showcasePageNumber, pageSize: 10 }),
-    enabled: activeTab === 'showcase',
-    placeholderData: (previousData) => previousData,
+  // G. Course Categories — full CRUD, so the admin can grow the taxonomy
+  // freely as the catalog expands, rather than a fixed list.
+  const { data: courseCategories } = useQuery({
+    queryKey: ['course-categories'],
+    queryFn: getCourseCategories,
   });
 
-  const deleteShowcasePostMutation = useMutation({
-    mutationFn: deleteShowcasePost,
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  const createCourseCategoryMutation = useMutation({
+    mutationFn: (name: string) => {
+      const slug = name.trim().toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+      return createCourseCategory({ name: name.trim(), slug });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-showcase-posts'] });
-      queryClient.invalidateQueries({ queryKey: ['showcase-posts'] });
-      showNotification('success', 'Showcase post removed.');
+      queryClient.invalidateQueries({ queryKey: ['course-categories'] });
+      setNewCategoryName('');
+      showNotification('success', 'Category added.');
     },
     onError: (err: any) => {
-      showNotification('error', err.detail || 'Failed to remove showcase post.');
+      showNotification('error', err.detail || 'Failed to add category.');
     },
   });
 
-  const handleDeleteShowcasePost = (showcasePostId: string, title: string) => {
-    if (window.confirm(`Remove "${title}" from the Showcase? This can't be undone.`)) {
-      deleteShowcasePostMutation.mutate(showcasePostId);
+  const deleteCourseCategoryMutation = useMutation({
+    mutationFn: deleteCourseCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-categories'] });
+      showNotification('success', 'Category deleted.');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || "Failed to delete category — it's probably still in use by a course.");
+    },
+  });
+
+  const handleAddCourseCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+    createCourseCategoryMutation.mutate(newCategoryName);
+  };
+
+  const handleDeleteCourseCategory = (categoryId: string, name: string) => {
+    if (window.confirm(`Delete category "${name}"? This only works if no courses use it.`)) {
+      deleteCourseCategoryMutation.mutate(categoryId);
     }
   };
 
-  // Per-post comment moderation — expands inline under a post row rather
-  // than a separate tab, since comments only make sense in the context of
-  // the post they belong to.
-  const [expandedShowcasePostId, setExpandedShowcasePostId] = useState<string | null>(null);
+  // H. Courses — discovery is topic-driven (admin types a topic and picks
+  // a category) rather than pulling from a fixed list of sources like
+  // Video ingestion does.
+  const [courseTopic, setCourseTopic] = useState('');
+  const [discoveryCategoryId, setDiscoveryCategoryId] = useState('');
 
-  const { data: showcaseComments, isLoading: isShowcaseCommentsLoading } = useQuery({
-    queryKey: ['admin-showcase-comments', expandedShowcasePostId],
-    queryFn: () => getShowcaseComments(expandedShowcasePostId!),
-    enabled: !!expandedShowcasePostId,
+  const { data: courseDrafts, isLoading: isCourseDraftsLoading } = useQuery({
+    queryKey: ['admin-course-drafts'],
+    queryFn: getAdminCourseDrafts,
   });
 
-  const deleteShowcaseCommentMutation = useMutation({
-    mutationFn: deleteShowcaseComment,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-showcase-comments', expandedShowcasePostId] });
-      showNotification('success', 'Comment removed.');
+  const courseDiscoveryMutation = useMutation({
+    mutationFn: () => discoverCourses(courseTopic.trim(), discoveryCategoryId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-course-drafts'] });
+      if (result.draftsCreated > 0) {
+        showNotification('success', `Found ${result.candidatesFound} courses, added ${result.draftsCreated} new drafts.`);
+      } else {
+        showNotification('success', `Found ${result.candidatesFound} courses — nothing new (${result.skipped} already seen).`);
+      }
     },
     onError: (err: any) => {
-      showNotification('error', err.detail || 'Failed to remove comment.');
+      showNotification('error', err.detail || 'Failed to search for courses.');
     },
   });
 
-  const handleToggleShowcaseComments = (showcasePostId: string) => {
-    setExpandedShowcasePostId((prev) => (prev === showcasePostId ? null : showcasePostId));
+  const handleDiscoverCourses = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!courseTopic.trim() || !discoveryCategoryId) return;
+    courseDiscoveryMutation.mutate();
   };
 
-  const handleDeleteShowcaseComment = (showcaseCommentId: string) => {
-    if (window.confirm('Remove this comment? This can\'t be undone.')) {
-      deleteShowcaseCommentMutation.mutate(showcaseCommentId);
+  const publishCourseMutation = useMutation({
+    mutationFn: publishCourse,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-course-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      showNotification('success', 'Course published successfully!');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to publish course.');
+    },
+  });
+
+  const deleteCourseMutation = useMutation({
+    mutationFn: deleteCourse,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-course-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      showNotification('success', 'Course deleted.');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to delete course.');
+    },
+  });
+
+  const handleDeleteCourse = (courseId: string, title: string) => {
+    if (window.confirm(`Delete "${title}"? This can't be undone.`)) {
+      deleteCourseMutation.mutate(courseId);
     }
+  };
+
+  // I. AI Settings — per-task provider/model switching + the editable
+  // article-writing template.
+  const { data: aiTaskConfigs } = useQuery({
+    queryKey: ['ai-task-configs'],
+    queryFn: getAiTaskConfigs,
+    enabled: activeTab === 'ai-settings',
+  });
+
+  const { data: articleTemplate } = useQuery({
+    queryKey: ['article-writing-template'],
+    queryFn: getArticleWritingTemplate,
+    enabled: activeTab === 'ai-settings',
+  });
+
+  const [templateDraft, setTemplateDraft] = useState<string | null>(null);
+
+  const setTaskConfigMutation = useMutation({
+    mutationFn: ({ task, provider, model }: { task: AiTask; provider: AiProvider; model: string }) =>
+      setAiTaskConfig(task, provider, model),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-task-configs'] });
+      showNotification('success', 'AI provider updated.');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to update AI provider.');
+    },
+  });
+
+  const updateTemplateMutation = useMutation({
+    mutationFn: (promptTemplate: string) => updateArticleWritingTemplate(promptTemplate),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['article-writing-template'] });
+      showNotification('success', 'Article writing template updated.');
+    },
+    onError: (err: any) => {
+      showNotification('error', err.detail || 'Failed to update template.');
+    },
+  });
+
+  const handleSaveTemplate = () => {
+    if (templateDraft === null) return;
+    updateTemplateMutation.mutate(templateDraft);
   };
 
   const handleToggleFormTag = (id: string) => {
@@ -594,18 +687,32 @@ export const AdminPage: React.FC = () => {
           Videos ({videoDrafts?.length || 0})
         </button>
         <button
-          onClick={() => setActiveTab('showcase')}
+          onClick={() => setActiveTab('course')}
           className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
-            activeTab === 'showcase'
+            activeTab === 'course'
               ? 'bg-stone-900 text-white shadow-sm'
               : 'text-stone-500 hover:text-stone-950 hover:bg-stone-50'
           }`}
-          id="admin-tab-showcase"
+          id="admin-tab-course"
           type="button"
           role="tab"
-          aria-selected={activeTab === 'showcase'}
+          aria-selected={activeTab === 'course'}
         >
-          Showcase ({showcasePostsResult?.totalCount ?? 0})
+          Courses ({courseDrafts?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('ai-settings')}
+          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
+            activeTab === 'ai-settings'
+              ? 'bg-stone-900 text-white shadow-sm'
+              : 'text-stone-500 hover:text-stone-950 hover:bg-stone-50'
+          }`}
+          id="admin-tab-ai-settings"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'ai-settings'}
+        >
+          AI Settings
         </button>
       </div>
 
@@ -1383,157 +1490,338 @@ export const AdminPage: React.FC = () => {
         </section>
       )}
 
-      {/* TAB 7: SHOWCASE MODERATION — posts publish immediately (no review
-          queue), so this is a browse-and-remove list rather than an
-          approval queue like the other content types. */}
-      {activeTab === 'showcase' && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">
-            <Sparkles className="w-4 h-4" />
-            Student Showcase Moderation
-          </div>
-          <p className="text-xs text-stone-500 -mt-2">
-            Showcase posts go live immediately when a student publishes them — there's no review queue to approve.
-            Use this list to remove anything that violates guidelines.
-          </p>
+      {/* TAB 7: COURSES — category management + topic-driven AI discovery + review queue */}
+      {activeTab === 'course' && (
+        <section className="space-y-8">
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="border-b border-stone-100 pb-3">
+              <h2 className="font-serif text-xl font-bold text-stone-800 flex items-center gap-1.5">
+                <Layers className="w-5 h-5 text-emerald-800" />
+                Course Categories
+              </h2>
+              <p className="text-xs text-stone-500 mt-1">
+                Categories keep the Courses directory organized instead of one flat, random list. Add as many as you need — deleting one only works if no course still uses it.
+              </p>
+            </div>
 
-          {isShowcaseLoading && !showcasePostsResult ? (
-            <div className="flex flex-col items-center py-12 gap-3 text-stone-400">
-              <Loader2 className="w-8 h-8 animate-spin" />
-              <p className="text-xs">Loading showcase posts...</p>
-            </div>
-          ) : !showcasePostsResult?.items || showcasePostsResult.items.length === 0 ? (
-            <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center max-w-md mx-auto space-y-3">
-              <CheckSquare className="w-12 h-12 text-emerald-500 mx-auto" />
-              <h3 className="font-serif text-lg font-bold text-stone-800">No showcase posts yet</h3>
-              <p className="text-sm text-stone-500">Nothing to moderate — the community hasn't posted anything.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                {showcasePostsResult.items.map((post) => (
-                <div key={post.id} className="space-y-0">
-                  <div
-                    className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-stone-300 transition-colors"
-                    style={expandedShowcasePostId === post.id ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomWidth: 0 } : undefined}
+            <form onSubmit={handleAddCourseCategory} className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                placeholder="e.g. Web Development, Data Science, Game Design"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className={`${fieldClass} flex-1`}
+              />
+              <button
+                type="submit"
+                disabled={createCourseCategoryMutation.isPending || !newCategoryName.trim()}
+                className={`${primaryButtonClass} whitespace-nowrap`}
+              >
+                {createCourseCategoryMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Plus className="w-3.5 h-3.5" />
+                )}
+                Add Category
+              </button>
+            </form>
+
+            {courseCategories && courseCategories.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {courseCategories.map((cat) => (
+                  <span
+                    key={cat.id}
+                    className="inline-flex items-center gap-2 text-xs font-bold bg-stone-50 border border-stone-200 text-stone-700 pl-3 pr-2 py-1.5 rounded-full"
                   >
-                    <div className="space-y-1.5 max-w-2xl">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {post.authorName}
-                        </span>
-                        {post.toolsUsed && (
-                          <span className="text-xs font-semibold text-stone-500">{post.toolsUsed}</span>
-                        )}
-                        <span className="text-[10px] text-stone-400">
-                          {new Date(post.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                      </div>
-                      <h3 className="font-serif text-lg font-bold text-stone-900">{post.title}</h3>
-                      <p className="text-xs text-stone-600 line-clamp-2">{post.description}</p>
-                    </div>
+                    {cat.name}
+                    <button
+                      onClick={() => handleDeleteCourseCategory(cat.id, cat.name)}
+                      disabled={deleteCourseCategoryMutation.isPending}
+                      className="text-stone-400 hover:text-red-600 transition-colors"
+                      title="Delete category"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
 
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="border-b border-stone-100 pb-3">
+              <h2 className="font-serif text-xl font-bold text-stone-800 flex items-center gap-1.5">
+                <GraduationCap className="w-5 h-5 text-emerald-800" />
+                Find Courses
+              </h2>
+              <p className="text-xs text-stone-500 mt-1">
+                Type a topic and pick a category — Claude searches the web (YouTube, Coursera, Udemy, freeCodeCamp, and more) for real courses on it, tagging each as free or paid.
+              </p>
+            </div>
+
+            {(!courseCategories || courseCategories.length === 0) ? (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                Add a category above before searching for courses.
+              </p>
+            ) : (
+              <form onSubmit={handleDiscoverCourses} className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="e.g. Prompt engineering for beginners"
+                    value={courseTopic}
+                    onChange={(e) => setCourseTopic(e.target.value)}
+                    className={fieldClass}
+                    style={{ paddingLeft: '2.25rem' }}
+                  />
+                  <Search className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
+                </div>
+                <select
+                  value={discoveryCategoryId}
+                  onChange={(e) => setDiscoveryCategoryId(e.target.value)}
+                  className={fieldClass}
+                  style={{ maxWidth: '14rem' }}
+                >
+                  <option value="">Choose category...</option>
+                  {courseCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={courseDiscoveryMutation.isPending || !courseTopic.trim() || !discoveryCategoryId}
+                  className={`${primaryButtonClass} whitespace-nowrap`}
+                >
+                  {courseDiscoveryMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Searching...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>Search for courses</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400">
+              <Layers className="w-4 h-4" />
+              Course Review Queue
+            </div>
+
+            {isCourseDraftsLoading ? (
+              <div className="flex flex-col items-center py-12 gap-3 text-stone-400">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <p className="text-xs">Loading queue items...</p>
+              </div>
+            ) : !courseDrafts || courseDrafts.length === 0 ? (
+              <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center max-w-md mx-auto space-y-3">
+                <CheckSquare className="w-12 h-12 text-emerald-500 mx-auto" />
+                <h3 className="font-serif text-lg font-bold text-stone-800">No course drafts waiting</h3>
+                <p className="text-sm text-stone-500">Search for a topic above to find some.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {courseDrafts.map((draft) => (
+                  <div
+                    key={draft.id}
+                    className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-stone-300 transition-colors"
+                  >
+                    <div className="flex items-start gap-4 max-w-2xl">
+                      {draft.thumbnailUrl && (
+                        <img src={draft.thumbnailUrl} alt={draft.title} className="w-24 h-16 object-cover rounded-lg border border-stone-200 shrink-0" />
+                      )}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {draft.courseCategoryName}
+                          </span>
+                          <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                            {draft.provider}
+                          </span>
+                          <span
+                            className={`text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded border ${
+                              draft.pricingType === 'Free'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-orange-50 text-orange-700 border-orange-200'
+                            }`}
+                          >
+                            {draft.pricingType === 'Free' ? 'Free' : draft.price || 'Paid'}
+                          </span>
+                        </div>
+                        <h3 className="font-serif text-lg font-bold text-stone-900">{draft.title}</h3>
+                        <p className="text-xs text-stone-600 line-clamp-2">{draft.description}</p>
+                        <a
+                          href={draft.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-emerald-700 underline break-all"
+                        >
+                          {draft.externalUrl}
+                        </a>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2 self-start md:self-center">
                       <button
-                        onClick={() => handleToggleShowcaseComments(post.id)}
-                        className="bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-bold py-2 px-3 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+                        onClick={() => publishCourseMutation.mutate(draft.id)}
+                        disabled={publishCourseMutation.isPending}
+                        className="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-75 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm cursor-pointer transition-colors whitespace-nowrap"
                       >
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        Comments
-                        {expandedShowcasePostId === post.id ? (
-                          <ChevronUp className="w-3.5 h-3.5" />
-                        ) : (
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        )}
+                        Approve & Publish
                       </button>
-                      <a
-                        href={`/showcase/${post.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-bold py-2 px-3 rounded-lg transition-colors whitespace-nowrap"
-                      >
-                        View post
-                      </a>
                       <button
-                        onClick={() => handleDeleteShowcasePost(post.id, post.title)}
-                        disabled={deleteShowcasePostMutation.isPending}
+                        onClick={() => handleDeleteCourse(draft.id, draft.title)}
+                        disabled={deleteCourseMutation.isPending}
                         className="bg-white hover:bg-red-50 disabled:opacity-60 text-red-600 border border-red-200 p-2.5 rounded-lg shadow-sm cursor-pointer transition-colors"
-                        title="Remove post"
+                        title="Delete draft"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-
-                  {expandedShowcasePostId === post.id && (
-                    <div className="bg-stone-50 border border-t-0 border-stone-200 rounded-b-xl p-5 space-y-3">
-                      {isShowcaseCommentsLoading ? (
-                        <p className="text-xs text-stone-400">Loading comments...</p>
-                      ) : !showcaseComments || showcaseComments.length === 0 ? (
-                        <p className="text-xs text-stone-400">No comments on this post.</p>
-                      ) : (
-                        showcaseComments.map((comment) => (
-                          <div
-                            key={comment.id}
-                            className="bg-white border border-stone-200 rounded-lg p-3 flex items-start justify-between gap-3"
-                          >
-                            <div className="space-y-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-stone-800">{comment.authorName}</span>
-                                <span className="text-[10px] text-stone-400">
-                                  {new Date(comment.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </span>
-                              </div>
-                              <p className="text-xs text-stone-600 whitespace-pre-wrap break-words">{comment.body}</p>
-                              {comment.imageUrl && (
-                                <img src={comment.imageUrl} alt="Comment attachment" className="max-w-[10rem] rounded-md border border-stone-200 mt-1" />
-                              )}
-                            </div>
-                            <button
-                              onClick={() => handleDeleteShowcaseComment(comment.id)}
-                              disabled={deleteShowcaseCommentMutation.isPending}
-                              className="bg-white hover:bg-red-50 disabled:opacity-60 text-red-600 border border-red-200 p-2 rounded-lg shadow-sm cursor-pointer transition-colors shrink-0"
-                              title="Remove comment"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
                 ))}
               </div>
-
-              {showcasePostsResult.totalPages > 1 && (
-                <div className="flex items-center justify-between border-t border-stone-200 pt-6">
-                  <span className="text-xs font-medium text-stone-500">
-                    Page {showcasePostsResult.pageNumber} of {showcasePostsResult.totalPages} (Total {showcasePostsResult.totalCount} items)
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowcasePageNumber((p) => Math.max(1, p - 1))}
-                      disabled={showcasePageNumber <= 1}
-                      className="p-1.5 border border-stone-200 rounded-md bg-white text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:hover:bg-white transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => setShowcasePageNumber((p) => Math.min(showcasePostsResult.totalPages, p + 1))}
-                      disabled={showcasePageNumber >= showcasePostsResult.totalPages}
-                      className="p-1.5 border border-stone-200 rounded-md bg-white text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:hover:bg-white transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </section>
       )}
 
+      {/* TAB 8: AI SETTINGS — per-task provider/model switching + editable article template */}
+      {activeTab === 'ai-settings' && (
+        <section className="space-y-8 max-w-3xl">
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-5">
+            <div className="border-b border-stone-100 pb-3">
+              <h2 className="font-serif text-xl font-bold text-stone-800 flex items-center gap-1.5">
+                <Cpu className="w-5 h-5 text-emerald-800" />
+                AI Provider per Task
+              </h2>
+              <p className="text-xs text-stone-500 mt-1">
+                Each task is switched independently — e.g. Article Writing can run on Claude while Video Review runs on Gemini, at the same time.
+              </p>
+            </div>
+
+            {(aiTaskConfigs ?? []).map((config) => (
+              <AiTaskConfigRow
+                key={config.task}
+                config={config}
+                onSave={(provider, model) => setTaskConfigMutation.mutate({ task: config.task, provider, model })}
+                isSaving={setTaskConfigMutation.isPending}
+                fieldClass={fieldClass}
+              />
+            ))}
+          </div>
+
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="border-b border-stone-100 pb-3">
+              <h2 className="font-serif text-xl font-bold text-stone-800 flex items-center gap-1.5">
+                <Clipboard className="w-5 h-5 text-emerald-800" />
+                Article Writing Template
+              </h2>
+              <p className="text-xs text-stone-500 mt-1">
+                This is the editorial voice/instructions given to whichever model writes articles. The output format itself (title, summary, body, category, tags) stays fixed — only this direction is editable.
+              </p>
+            </div>
+
+            {articleTemplate && (
+              <>
+                <textarea
+                  value={templateDraft ?? articleTemplate.promptTemplate}
+                  onChange={(e) => setTemplateDraft(e.target.value)}
+                  className={`${fieldClass} font-mono h-48`}
+                />
+                {articleTemplate.isDefault && templateDraft === null && (
+                  <p className="text-[10px] text-stone-400">Showing the built-in default — nothing custom saved yet.</p>
+                )}
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSaveTemplate}
+                    disabled={updateTemplateMutation.isPending || templateDraft === null}
+                    className={primaryButtonClass}
+                  >
+                    {updateTemplateMutation.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sliders className="w-3.5 h-3.5" />
+                    )}
+                    Save Template
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+    </div>
+  );
+};
+
+const PROVIDERS: { value: AiProvider; label: string; modelHint: string }[] = [
+  { value: 'Anthropic', label: 'Claude (Anthropic)', modelHint: 'e.g. claude-sonnet-4-5' },
+  { value: 'Gemini', label: 'Gemini (Google)', modelHint: 'e.g. gemini-2.0-flash' },
+  { value: 'OpenAI', label: 'ChatGPT (OpenAI)', modelHint: 'e.g. gpt-4o' },
+  { value: 'Kimi', label: 'Kimi (Moonshot)', modelHint: 'e.g. kimi-k2-0711-preview' },
+];
+
+const TASK_LABELS: Record<AiTask, string> = {
+  ArticleWriting: 'Article Writing',
+  VideoReview: 'Video Review',
+};
+
+const AiTaskConfigRow: React.FC<{
+  config: { task: AiTask; provider: AiProvider; model: string | null; isDefault: boolean };
+  onSave: (provider: AiProvider, model: string) => void;
+  isSaving: boolean;
+  fieldClass: string;
+}> = ({ config, onSave, isSaving, fieldClass }) => {
+  const [provider, setProvider] = useState<AiProvider>(config.provider);
+  const [model, setModel] = useState(config.model ?? '');
+
+  const providerInfo = PROVIDERS.find((p) => p.value === provider);
+  const hasChanges = provider !== config.provider || model !== (config.model ?? '');
+
+  return (
+    <div className="border border-stone-100 rounded-xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-stone-800">{TASK_LABELS[config.task]}</h3>
+        {config.isDefault && (
+          <span className="text-[9px] font-bold uppercase tracking-wider text-stone-400 bg-stone-50 border border-stone-200 px-2 py-0.5 rounded">
+            Using default
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <select
+          value={provider}
+          onChange={(e) => setProvider(e.target.value as AiProvider)}
+          className={fieldClass}
+        >
+          {PROVIDERS.map((p) => (
+            <option key={p.value} value={p.value}>{p.label}</option>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          placeholder={providerInfo?.modelHint}
+          className={fieldClass}
+        />
+      </div>
+      <div className="flex justify-end">
+        <button
+          onClick={() => onSave(provider, model)}
+          disabled={isSaving || !model.trim() || !hasChanges}
+          className="bg-stone-900 hover:bg-stone-800 disabled:opacity-60 text-white text-xs font-bold py-2 px-4 rounded-lg cursor-pointer transition-colors"
+        >
+          Save
+        </button>
+      </div>
     </div>
   );
 };

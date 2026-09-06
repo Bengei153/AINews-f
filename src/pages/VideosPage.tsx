@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { getVideos } from '../api/videos';
 import { VideoCard } from '../components/VideoCard';
+import { LearningNavTabs } from '../components/LearningNavTabs';
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight, PlayCircle } from 'lucide-react';
 
 export const VideosPage: React.FC = () => {
@@ -54,7 +55,8 @@ export const VideosPage: React.FC = () => {
   return (
     <div className="listing-page animate-in fade-in duration-200">
       <div className="listing-header">
-        <div>
+        <div className="space-y-3">
+          <LearningNavTabs />
           <div className="section-kicker">
             <PlayCircle className="w-3.5 h-3.5" />
             Media Hub

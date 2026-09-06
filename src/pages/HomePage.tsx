@@ -9,8 +9,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../store/authStore';
 import { getArticles } from '../api/articles';
 import { getAiTools } from '../api/aiTools';
+import { getCourses } from '../api/courses';
 import { ArticleCard } from '../components/ArticleCard';
 import { ToolCard } from '../components/ToolCard';
+import { CourseCard } from '../components/courseCard';
 import {
   ArrowRight,
   BookOpen,
@@ -36,6 +38,11 @@ export const HomePage: React.FC = () => {
   const { data: featuredTools, isLoading: isToolsLoading } = useQuery({
     queryKey: ['featured-tools'],
     queryFn: () => getAiTools(true),
+  });
+
+  const { data: featuredCourses, isLoading: isCoursesLoading } = useQuery({
+    queryKey: ['home-courses'],
+    queryFn: () => getCourses({ pageSize: 3 }),
   });
 
   const featuredTool = featuredTools?.[0];
@@ -272,6 +279,39 @@ export const HomePage: React.FC = () => {
                     article={art}
                     hideMissingImagePlaceholder={hideRecentImagePlaceholders}
                   />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="content-section">
+            <div className="section-heading-row">
+              <h2 className="font-serif">
+                <GraduationCap className="w-5 h-5" />
+                Full Courses
+              </h2>
+              <Link to="/courses" className="text-link text-link--muted">
+                View all courses
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {isCoursesLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="skeleton-card animate-pulse">
+                    <div className="w-24 h-4 bg-stone-200 rounded"></div>
+                    <div className="w-full h-6 bg-stone-200 rounded"></div>
+                    <div className="w-full h-12 bg-stone-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : !featuredCourses?.items || featuredCourses.items.length === 0 ? (
+              <p className="muted-copy">No courses yet — check back soon.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {featuredCourses.items.map((course) => (
+                  <CourseCard key={course.id} course={course} />
                 ))}
               </div>
             )}
