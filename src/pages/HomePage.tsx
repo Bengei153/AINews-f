@@ -12,7 +12,7 @@ import { getAiTools } from '../api/aiTools';
 import { getCourses } from '../api/courses';
 import { ArticleCard } from '../components/ArticleCard';
 import { ToolCard } from '../components/ToolCard';
-import { CourseCard } from '../components/courseCard';
+import { CourseCard } from '../components/CourseCard';
 import {
   ArrowRight,
   BookOpen,

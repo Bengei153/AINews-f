@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { getCourses } from '../api/courses';
 import { getCourseCategories } from '../api/courseCategories';
-import { CourseCard } from '../components/courseCard';
+import { CourseCard } from '../components/CourseCard';
 import { LearningNavTabs } from '../components/LearningNavTabs';
 import { CoursePricingType } from '../types/api';
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
