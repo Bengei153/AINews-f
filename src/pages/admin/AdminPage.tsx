@@ -111,7 +111,15 @@ export const AdminPage: React.FC = () => {
     mutationFn: triggerNewsIngestion,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['admin-drafts'] });
-      if (result.draftsCreated > 0) {
+      if (result.errors.length > 0) {
+        const more = result.errors.length > 1 ? ` (+${result.errors.length - 1} more failed)` : '';
+        showNotification(
+          'error',
+          result.draftsCreated > 0
+            ? `Created ${result.draftsCreated} of ${result.itemsFetched}, but ${result.errors.length} failed: ${result.errors[0]}${more}`
+            : `All ${result.itemsFetched} items failed: ${result.errors[0]}${more}`
+        );
+      } else if (result.draftsCreated > 0) {
         showNotification('success', `Fetched ${result.itemsFetched} items, created ${result.draftsCreated} new drafts.`);
       } else {
         showNotification('success', `Checked ${result.itemsFetched} items — nothing new (${result.skipped} already seen).`);
@@ -268,7 +276,15 @@ export const AdminPage: React.FC = () => {
     mutationFn: triggerVideoIngestion,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['admin-video-drafts'] });
-      if (result.draftsCreated > 0) {
+      if (result.errors.length > 0) {
+        const more = result.errors.length > 1 ? ` (+${result.errors.length - 1} more failed)` : '';
+        showNotification(
+          'error',
+          result.draftsCreated > 0
+            ? `Created ${result.draftsCreated} of ${result.videosFetched}, but ${result.errors.length} failed: ${result.errors[0]}${more}`
+            : `All ${result.videosFetched} videos failed: ${result.errors[0]}${more}`
+        );
+      } else if (result.draftsCreated > 0) {
         showNotification('success', `Fetched ${result.videosFetched} videos, created ${result.draftsCreated} new drafts.`);
       } else {
         showNotification('success', `Checked ${result.videosFetched} videos — nothing new (${result.skipped} already seen).`);
@@ -371,7 +387,15 @@ export const AdminPage: React.FC = () => {
     mutationFn: () => discoverCourses(courseTopic.trim(), discoveryCategoryId),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['admin-course-drafts'] });
-      if (result.draftsCreated > 0) {
+      if (result.errors.length > 0) {
+        const more = result.errors.length > 1 ? ` (+${result.errors.length - 1} more failed)` : '';
+        showNotification(
+          'error',
+          result.draftsCreated > 0
+            ? `Added ${result.draftsCreated} of ${result.candidatesFound} courses, but ${result.errors.length} failed: ${result.errors[0]}${more}`
+            : `All ${result.candidatesFound} courses failed: ${result.errors[0]}${more}`
+        );
+      } else if (result.draftsCreated > 0) {
         showNotification('success', `Found ${result.candidatesFound} courses, added ${result.draftsCreated} new drafts.`);
       } else {
         showNotification('success', `Found ${result.candidatesFound} courses — nothing new (${result.skipped} already seen).`);
