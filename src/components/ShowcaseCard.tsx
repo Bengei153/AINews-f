@@ -6,7 +6,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShowcasePost } from '../types/api';
-import { Wrench, Sparkles } from 'lucide-react';
+import { Wrench, Sparkles, Star, Heart } from 'lucide-react';
 
 interface ShowcaseCardProps {
   post: ShowcasePost;
@@ -18,12 +18,24 @@ export const ShowcaseCard: React.FC<ShowcaseCardProps> = ({ post }) => {
       {post.imageUrl ? (
         <Link to={`/showcase/${post.id}`} className="content-card__media">
           <img src={post.imageUrl} alt={post.title} />
+          {post.isFeatured && (
+            <span className="content-card__featured-pin">
+              <Star className="w-3 h-3" fill="currentColor" />
+              Staff pick
+            </span>
+          )}
         </Link>
       ) : (
         <div className="content-card__media">
           <div className="content-card__visual content-card__visual--showcase">
             <Sparkles className="w-7 h-7" />
           </div>
+          {post.isFeatured && (
+            <span className="content-card__featured-pin">
+              <Star className="w-3 h-3" fill="currentColor" />
+              Staff pick
+            </span>
+          )}
         </div>
       )}
 
@@ -54,6 +66,12 @@ export const ShowcaseCard: React.FC<ShowcaseCardProps> = ({ post }) => {
             </span>
             {post.authorName}
           </span>
+          {post.reactionCount > 0 && (
+            <span className="flex items-center gap-1 text-xs text-stone-400">
+              <Heart className="w-3.5 h-3.5" fill="currentColor" />
+              {post.reactionCount}
+            </span>
+          )}
         </div>
       </div>
     </article>

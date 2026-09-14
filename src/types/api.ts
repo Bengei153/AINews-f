@@ -214,6 +214,8 @@ export interface ShowcasePost {
   description: string;
   imageUrl: string | null;
   toolsUsed: string | null;
+  isFeatured: boolean;
+  reactionCount: number;
   created: string;
 }
 
@@ -223,4 +225,50 @@ export interface ShowcasePost {
 export interface ShowcaseReactions {
   counts: Record<ReactionType, number>;
   currentUserReaction: ReactionType | null;
+}
+
+// --- Follows ---
+
+export interface FollowStatus {
+  isFollowing: boolean;
+  followerCount: number;
+  followingCount: number;
+}
+
+// --- Badges/achievements ---
+
+export type BadgeCode =
+  | 'FirstShowcasePost'
+  | 'FiveShowcasePosts'
+  | 'TenComments'
+  | 'SevenDayStreak'
+  | 'ThirtyDayStreak'
+  | 'HundredXp'
+  | 'FiveHundredXp'
+  | 'ThousandXp'
+  | 'FiftyReactionsReceived'
+  | 'TenFollowers';
+
+export interface Badge {
+  code: BadgeCode;
+  name: string;
+  description: string;
+  icon: string; // lucide-react icon name
+  earned: boolean;
+  earnedOn: string | null;
+}
+
+// --- Showcase leaderboard ---
+
+export type LeaderboardPeriod = 'Week' | 'Month' | 'All';
+
+export interface ShowcaseLeaderboardEntry {
+  id: string;
+  title: string;
+  authorId: string;
+  authorName: string;
+  imageUrl: string | null;
+  reactionCount: number;
+  isFeatured: boolean;
+  created: string;
 }

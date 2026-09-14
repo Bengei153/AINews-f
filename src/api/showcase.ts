@@ -4,11 +4,12 @@
  */
 
 import { apiClient, isDemoMode, simulateNetworkDelay } from './client';
-import { ShowcasePost, ShowcaseReactions, ReactionType, Comment, PaginatedResult } from '../types/api';
+import { ShowcasePost, ShowcaseReactions, ReactionType, Comment, PaginatedResult, ShowcaseLeaderboardEntry, LeaderboardPeriod } from '../types/api';
 
 export interface GetShowcasePostsParams {
   toolName?: string;
   search?: string;
+  followingOnly?: boolean;
   pageNumber?: number;
   pageSize?: number;
 }
@@ -108,4 +109,24 @@ export const deleteShowcaseComment = async (showcaseCommentId: string): Promise<
   }
 
   await apiClient.delete(`/showcase/comments/${showcaseCommentId}`);
+};
+
+export const getShowcaseLeaderboard = async (period: LeaderboardPeriod = 'All', take = 10): Promise<ShowcaseLeaderboardEntry[]> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    return [];
+  }
+
+  const response = await apiClient.get<ShowcaseLeaderboardEntry[]>('/showcase/leaderboard', { params: { period, take } });
+  return response.data;
+};
+
+/// Admin-only — toggles a showcase post's "staff pick" flag.
+export const setShowcasePostFeatured = async (showcasePostId: string, isFeatured: boolean): Promise<void> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    return;
+  }
+
+  await apiClient.put(`/showcase/posts/${showcasePostId}/featured`, { isFeatured });
 };

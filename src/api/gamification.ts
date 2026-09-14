@@ -12,6 +12,7 @@ export interface DailyActivityResult {
   totalXp: number;
   xpAwardedToday: boolean;
   streakBonusAwarded: boolean;
+  newlyEarnedBadges: string[];
 }
 
 export const getMyGameProfile = async (): Promise<GameProfile> => {
@@ -28,7 +29,7 @@ export const getMyGameProfile = async (): Promise<GameProfile> => {
 export const pingDailyActivity = async (): Promise<DailyActivityResult> => {
   if (isDemoMode()) {
     await simulateNetworkDelay();
-    return { currentStreak: 0, longestStreak: 0, totalXp: 0, xpAwardedToday: false, streakBonusAwarded: false };
+    return { currentStreak: 0, longestStreak: 0, totalXp: 0, xpAwardedToday: false, streakBonusAwarded: false, newlyEarnedBadges: [] };
   }
   const response = await apiClient.post<DailyActivityResult>('/gamification/ping');
   return response.data;
