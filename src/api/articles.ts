@@ -225,10 +225,10 @@ export const getAdminDrafts = async (): Promise<ArticleDetail[]> => {
   return response.data;
 };
 
-export const triggerNewsIngestion = async (): Promise<{ itemsFetched: number; draftsCreated: number; skipped: number; errors: string[] }> => {
+export const triggerNewsIngestion = async (): Promise<{ message: string }> => {
   if (isDemoMode()) {
     await simulateNetworkDelay();
-    return { itemsFetched: 0, draftsCreated: 0, skipped: 0, errors: ['News ingestion is not simulated in demo mode.'] };
+    return { message: 'News ingestion is not simulated in demo mode.' };
   }
 
   const response = await apiClient.post('/articles/ingest-news');

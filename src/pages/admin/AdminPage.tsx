@@ -110,23 +110,15 @@ export const AdminPage: React.FC = () => {
   const ingestMutation = useMutation({
     mutationFn: triggerNewsIngestion,
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-drafts'] });
-      if (result.errors.length > 0) {
-        const more = result.errors.length > 1 ? ` (+${result.errors.length - 1} more failed)` : '';
-        showNotification(
-          'error',
-          result.draftsCreated > 0
-            ? `Created ${result.draftsCreated} of ${result.itemsFetched}, but ${result.errors.length} failed: ${result.errors[0]}${more}`
-            : `All ${result.itemsFetched} items failed: ${result.errors[0]}${more}`
-        );
-      } else if (result.draftsCreated > 0) {
-        showNotification('success', `Fetched ${result.itemsFetched} items, created ${result.draftsCreated} new drafts.`);
-      } else {
-        showNotification('success', `Checked ${result.itemsFetched} items — nothing new (${result.skipped} already seen).`);
-      }
+      showNotification('success', result.message);
+      // Runs as a background job now, not inline — give it a little time
+      // to actually finish before refreshing the drafts list.
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['admin-drafts'] });
+      }, 45000);
     },
     onError: (err: any) => {
-      showNotification('error', err.detail || 'Failed to run news ingestion.');
+      showNotification('error', err.detail || 'Failed to start news ingestion.');
     },
   });
 
