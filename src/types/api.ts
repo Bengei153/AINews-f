@@ -203,6 +203,10 @@ export interface ApiError {
   errors?: Record<string, string[]>;
 }
 
+// Which content type a share (into Showcase, or sent to a follower) points
+// at — mirrors the backend's Domain.Enums.SharedContentType exactly.
+export type SharedContentType = 'Article' | 'Video' | 'Tutorial' | 'Course';
+
 // Stage 6 — Student Showcase. The backend returns the same shape for both
 // the paged list and the single-post detail endpoint, so one type covers
 // both (unlike Article/Tutorial, which have separate Summary/Detail DTOs).
@@ -217,6 +221,11 @@ export interface ShowcasePost {
   isFeatured: boolean;
   reactionCount: number;
   created: string;
+  sharedContentType: SharedContentType | null;
+  sharedContentId: string | null;
+  sharedContentTitle: string | null;
+  sharedContentSlug: string | null;
+  sharedContentThumbnailUrl: string | null;
 }
 
 // Reaction counts + current user's reaction, identical shape to
@@ -227,12 +236,42 @@ export interface ShowcaseReactions {
   currentUserReaction: ReactionType | null;
 }
 
+// --- Notifications ---
+
+// Only one value exists today (the "send to a follower" content share),
+// but the backend deliberately typed it as an enum with room to grow —
+// see Domain.Enums.NotificationType — so this mirrors that rather than
+// hardcoding a boolean/string here.
+export type NotificationType = 'ContentShared';
+
+export interface Notification {
+  id: string;
+  actorUserId: string;
+  actorName: string;
+  type: NotificationType;
+  contentType: SharedContentType | null;
+  contentId: string | null;
+  contentTitle: string | null;
+  contentSlug: string | null;
+  contentThumbnailUrl: string | null;
+  message: string | null;
+  isRead: boolean;
+  created: string;
+}
+
 // --- Follows ---
 
 export interface FollowStatus {
   isFollowing: boolean;
   followerCount: number;
   followingCount: number;
+}
+
+// A person who follows the current user — used by the "send to a
+// follower" recipient picker (GetMyFollowersQuery on the backend).
+export interface FollowerDto {
+  userId: string;
+  fullName: string;
 }
 
 // --- Badges/achievements ---

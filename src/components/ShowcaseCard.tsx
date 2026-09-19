@@ -5,8 +5,18 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShowcasePost } from '../types/api';
-import { Wrench, Sparkles, Star, Heart } from 'lucide-react';
+import { ShowcasePost, SharedContentType } from '../types/api';
+import { Wrench, Sparkles, Star, Heart, Link2 } from 'lucide-react';
+
+// Courses have no in-app detail page (CourseCard links straight to
+// ExternalUrl, which isn't part of this snapshot), so a shared course
+// renders as plain text rather than a dead link.
+export const SHARED_CONTENT_PATH: Record<SharedContentType, string | null> = {
+  Article: 'articles',
+  Video: 'videos',
+  Tutorial: 'tutorials',
+  Course: null,
+};
 
 interface ShowcaseCardProps {
   post: ShowcasePost;
@@ -57,6 +67,28 @@ export const ShowcaseCard: React.FC<ShowcaseCardProps> = ({ post }) => {
             </h3>
           </Link>
           <p className="content-card__summary line-clamp-3">{post.description}</p>
+          {post.sharedContentType && post.sharedContentTitle && (
+            (() => {
+              const pathSegment = SHARED_CONTENT_PATH[post.sharedContentType];
+              const chipContent = (
+                <>
+                  <Link2 className="w-3 h-3" />
+                  {post.sharedContentTitle}
+                </>
+              );
+              return pathSegment && post.sharedContentSlug ? (
+                <Link
+                  to={`/${pathSegment}/${post.sharedContentSlug}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="shared-content-chip"
+                >
+                  {chipContent}
+                </Link>
+              ) : (
+                <span className="shared-content-chip">{chipContent}</span>
+              );
+            })()
+          )}
         </div>
 
         <div className="content-card__meta">

@@ -7,6 +7,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Course } from '../types/api';
 import { ExternalLink, GraduationCap } from 'lucide-react';
+import { ShareMenu } from './ShareMenu';
 
 interface CourseCardProps {
   course: Course;
@@ -50,6 +51,15 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
 
         <div className="content-card__meta">
           <span>{course.provider}</span>
+          <ShareMenu
+            variant="icon"
+            contentType="Course"
+            contentId={course.id}
+            slug={course.slug}
+            title={course.title}
+            summary={course.description}
+            thumbnailUrl={course.thumbnailUrl}
+          />
           <a
             href={course.externalUrl}
             target="_blank"

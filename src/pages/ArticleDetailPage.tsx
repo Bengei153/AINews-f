@@ -9,11 +9,11 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import { getArticleBySlug, incrementArticleView, deleteArticle } from '../api/articles';
 import { useAuth } from '../store/authStore';
-import { Clock, Bookmark, ArrowLeft, ExternalLink, Globe, BookOpen, AlertCircle, Share2, CheckCircle2, Eye, Trash2 } from 'lucide-react';
+import { Clock, Bookmark, ArrowLeft, ExternalLink, Globe, BookOpen, AlertCircle, Eye, Trash2 } from 'lucide-react';
 import { ArticlePillar } from '../types/api';
-import { getApiRootUrl } from '../api/client';
 import { ReactionBar } from '../components/ReactionBar';
 import { CommentSection } from '../components/CommentSection';
+import { ShareMenu } from '../components/ShareMenu';
 
 const PILLAR_LABELS: Record<ArticlePillar, string> = {
   AIForStudents: 'AI for Students',
@@ -37,7 +37,6 @@ export const ArticleDetailPage: React.FC = () => {
   });
 
   const isBookmarked = article ? bookmarks.some((b) => b.articleId === article.id) : false;
-  const [shareCopied, setShareCopied] = React.useState(false);
 
   // Record a view once per article per browser session — sessionStorage
   // means a refresh or revisit within the same tab session won't inflate
@@ -62,32 +61,6 @@ export const ArticleDetailPage: React.FC = () => {
       await toggleBookmark(article.id);
     } catch (err: any) {
       alert(err.detail || 'Failed to toggle bookmark.');
-    }
-  };
-
-  const handleShare = async () => {
-    if (!article) return;
-    // Points at the backend's /share/articles/{slug} route (not the
-    // frontend URL directly) — that route is what actually carries the
-    // og:image/og:title tags crawlers read, then redirects to this page.
-    const shareUrl = `${getApiRootUrl()}/share/articles/${article.slug}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: article.title, text: article.summary, url: shareUrl });
-        return;
-      } catch {
-        // User cancelled the native share sheet, or it's unsupported — fall
-        // through to copy-to-clipboard below.
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2000);
-    } catch {
-      alert(shareUrl);
     }
   };
 
@@ -248,29 +221,15 @@ export const ArticleDetailPage: React.FC = () => {
           </div>
 
           {/* Share Widget */}
-          <div className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400">Share</h3>
-            <button
-              onClick={handleShare}
-              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all border bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200"
-              id="share-detail-btn"
-            >
-              {shareCopied ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Link copied!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 className="w-4 h-4" />
-                  <span>Copy share link</span>
-                </>
-              )}
-            </button>
-            <p className="text-[10px] text-stone-400 text-center">
-              Shows a preview image and summary wherever you paste it.
-            </p>
-          </div>
+          <ShareMenu
+            variant="widget"
+            contentType="Article"
+            contentId={article.id}
+            slug={article.slug}
+            title={article.title}
+            summary={article.summary}
+            thumbnailUrl={article.coverImageUrl}
+          />
 
           {/* Admin-only: Delete Article */}
           {user?.role === 'Admin' && (

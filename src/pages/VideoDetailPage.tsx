@@ -9,6 +9,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { getVideoBySlug, incrementVideoView, deleteVideo } from '../api/videos';
 import { ArrowLeft, Eye, ExternalLink, AlertCircle, Trash2, Sparkles } from 'lucide-react';
 import { useAuth } from '../store/authStore';
+import { ShareMenu } from '../components/ShareMenu';
 
 export const VideoDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -109,6 +110,16 @@ export const VideoDetailPage: React.FC = () => {
         </h3>
         <p className="text-sm text-stone-700 leading-relaxed">{video.aiReview}</p>
       </div>
+
+      <ShareMenu
+        variant="widget"
+        contentType="Video"
+        contentId={video.id}
+        slug={video.slug}
+        title={video.title}
+        summary={video.aiReview}
+        thumbnailUrl={video.thumbnailUrl}
+      />
 
       {user?.role === 'Admin' && (
         <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-sm space-y-3">

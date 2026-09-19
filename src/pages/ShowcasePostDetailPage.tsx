@@ -9,8 +9,9 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { getShowcasePost, deleteShowcasePost } from '../api/showcase';
 import { ShowcaseReactionBar } from '../components/ShowcaseReactionBar';
 import { ShowcaseCommentSection } from '../components/ShowcaseCommentSection';
-import { ArrowLeft, Wrench, AlertCircle, Trash2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Wrench, AlertCircle, Trash2, ShieldCheck, Link2 } from 'lucide-react';
 import { useAuth } from '../store/authStore';
+import { SHARED_CONTENT_PATH } from '../components/ShowcaseCard';
 
 export const ShowcasePostDetailPage: React.FC = () => {
   const { showcasePostId } = useParams<{ showcasePostId: string }>();
@@ -88,6 +89,24 @@ export const ShowcasePostDetailPage: React.FC = () => {
           {post.title}
         </h1>
         <p className="editorial-lede">{post.description}</p>
+        {post.sharedContentType && post.sharedContentTitle && (
+          (() => {
+            const pathSegment = SHARED_CONTENT_PATH[post.sharedContentType];
+            const chipContent = (
+              <>
+                <Link2 className="w-3.5 h-3.5" />
+                Sharing: {post.sharedContentTitle}
+              </>
+            );
+            return pathSegment && post.sharedContentSlug ? (
+              <Link to={`/${pathSegment}/${post.sharedContentSlug}`} className="shared-content-chip">
+                {chipContent}
+              </Link>
+            ) : (
+              <span className="shared-content-chip">{chipContent}</span>
+            );
+          })()
+        )}
       </div>
 
       <ShowcaseReactionBar showcasePostId={post.id} />

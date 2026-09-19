@@ -9,6 +9,7 @@ import { useAuth } from '../store/authStore';
 import { Sparkles, Bookmark, LogOut, Menu, X, ShieldAlert, Sliders, Moon, Sun, ArrowUpRight } from 'lucide-react';
 import { NewsletterSignup } from './NewsletterSignup';
 import { StreakBadge } from './StreakBadge';
+import { NotificationBell } from './NotificationBell';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -109,6 +110,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
           <div className="desktop-actions">
             <StreakBadge />
+            {user && <NotificationBell />}
             <ThemeToggle />
             {user ? (
               <div className="account-cluster">
@@ -173,6 +175,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
           <div className="mobile-actions">
             {user && <StreakBadge variant="compact" />}
+            {user && <NotificationBell />}
             <ThemeToggle compact />
             {user && user.role === 'Admin' && (
               <Link

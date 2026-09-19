@@ -4,7 +4,7 @@
  */
 
 import { apiClient, isDemoMode, simulateNetworkDelay } from './client';
-import { FollowStatus } from '../types/api';
+import { FollowStatus, FollowerDto } from '../types/api';
 
 export const getFollowStatus = async (userId: string): Promise<FollowStatus> => {
   if (isDemoMode()) {
@@ -13,6 +13,17 @@ export const getFollowStatus = async (userId: string): Promise<FollowStatus> => 
   }
 
   const response = await apiClient.get<FollowStatus>(`/follows/${userId}/status`);
+  return response.data;
+};
+
+// The current user's own followers — feeds the "send to a follower" recipient picker.
+export const getMyFollowers = async (): Promise<FollowerDto[]> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    return [];
+  }
+
+  const response = await apiClient.get<FollowerDto[]>('/follows/mine/followers');
   return response.data;
 };
 

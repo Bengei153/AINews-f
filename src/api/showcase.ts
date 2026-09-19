@@ -4,7 +4,7 @@
  */
 
 import { apiClient, isDemoMode, simulateNetworkDelay } from './client';
-import { ShowcasePost, ShowcaseReactions, ReactionType, Comment, PaginatedResult, ShowcaseLeaderboardEntry, LeaderboardPeriod } from '../types/api';
+import { ShowcasePost, ShowcaseReactions, ReactionType, Comment, PaginatedResult, ShowcaseLeaderboardEntry, LeaderboardPeriod, SharedContentType } from '../types/api';
 
 export interface GetShowcasePostsParams {
   toolName?: string;
@@ -38,6 +38,8 @@ export interface CreateShowcasePostPayload {
   description: string;
   imageUrl?: string | null;
   toolsUsed?: string | null;
+  sharedContentType?: SharedContentType | null;
+  sharedContentId?: string | null;
 }
 
 export const createShowcasePost = async (payload: CreateShowcasePostPayload): Promise<string> => {

@@ -4,19 +4,36 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { createShowcasePost } from '../api/showcase';
 import { ImageUploadWidget } from '../components/ImageUploadWidget';
-import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, Sparkles, Link2 } from 'lucide-react';
+import { SharedContentType } from '../types/api';
+
+const VALID_SHARED_TYPES: SharedContentType[] = ['Article', 'Video', 'Tutorial', 'Course'];
 
 export const ShowcaseNewPostPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [toolsUsed, setToolsUsed] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Arrived here via a Video/Tutorial/Course/Article's "Post to Showcase"
+  // share action (see ShareMenu) — sharedType/sharedId get sent to the
+  // backend, the rest is just for the preview chip below so we don't need
+  // an extra fetch before the user has even started writing.
+  const rawSharedType = searchParams.get('sharedType');
+  const sharedType: SharedContentType | null = VALID_SHARED_TYPES.includes(rawSharedType as SharedContentType)
+    ? (rawSharedType as SharedContentType)
+    : null;
+  const sharedId = searchParams.get('sharedId');
+  const sharedTitle = searchParams.get('sharedTitle');
+  const sharedThumbnail = searchParams.get('sharedThumbnail');
+  const hasSharedContent = !!(sharedType && sharedId);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -25,6 +42,8 @@ export const ShowcaseNewPostPage: React.FC = () => {
         description,
         toolsUsed: toolsUsed || null,
         imageUrl: imageUrl || null,
+        sharedContentType: hasSharedContent ? sharedType : null,
+        sharedContentId: hasSharedContent ? sharedId : null,
       }),
     onSuccess: (id) => {
       navigate(`/showcase/${id}`);
@@ -60,6 +79,16 @@ export const ShowcaseNewPostPage: React.FC = () => {
           Tell the community what you built and which AI tools helped you build it.
         </p>
       </div>
+
+      {hasSharedContent && (
+        <div className="shared-content-chip shared-content-chip--preview">
+          {sharedThumbnail && <img src={sharedThumbnail} alt="" />}
+          <span>
+            <Link2 className="w-3.5 h-3.5" />
+            Sharing {sharedType?.toLowerCase()}: <strong>{sharedTitle}</strong>
+          </span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="sidebar-panel space-y-5">
         <div>

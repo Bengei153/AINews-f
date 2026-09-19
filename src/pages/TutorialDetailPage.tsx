@@ -11,6 +11,7 @@ import { getTutorialBySlug, incrementTutorialView, deleteTutorial } from '../api
 import { ArrowLeft, Eye, GraduationCap, AlertCircle, Trash2 } from 'lucide-react';
 import { DifficultyLevel } from '../types/api';
 import { useAuth } from '../store/authStore';
+import { ShareMenu } from '../components/ShareMenu';
 
 const DIFFICULTY_STYLES: Record<DifficultyLevel, string> = {
   Beginner: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -108,6 +109,16 @@ export const TutorialDetailPage: React.FC = () => {
       <article className="prose prose-stone max-w-none prose-headings:font-serif prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-p:text-sm prose-p:leading-relaxed prose-p:text-stone-700 space-y-5">
         <ReactMarkdown>{tutorial.body}</ReactMarkdown>
       </article>
+
+      <ShareMenu
+        variant="widget"
+        contentType="Tutorial"
+        contentId={tutorial.id}
+        slug={tutorial.slug}
+        title={tutorial.title}
+        summary={tutorial.summary}
+        thumbnailUrl={tutorial.coverImageUrl}
+      />
 
       {user?.role === 'Admin' && (
         <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-sm space-y-3">
