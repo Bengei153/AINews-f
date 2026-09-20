@@ -2654,11 +2654,9 @@ button, input, select, textarea { font: inherit; }
 }
 
 .share-menu__panel {
-  position: absolute;
-  top: calc(100% + 0.4rem);
-  right: 0;
-  z-index: 40;
+  z-index: 1000;
   min-width: 13rem;
+  max-width: calc(100vw - 1rem);
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -2911,12 +2909,9 @@ button, input, select, textarea { font: inherit; }
 }
 
 .notification-panel {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  z-index: 40;
+  z-index: 1000;
   width: 20rem;
-  max-width: 88vw;
+  max-width: calc(100vw - 1rem);
   max-height: 24rem;
   overflow: hidden;
   display: flex;
