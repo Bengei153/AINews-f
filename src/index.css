@@ -2001,6 +2001,20 @@ button, input, select, textarea { font: inherit; }
   width: fit-content;
 }
 
+/* Row holding the category eyebrow plus, for a course with no thumbnail,
+   the pricing badge that would otherwise float over the (now-absent) image
+   — see CourseCard.tsx and .pricing-badge--inline below. */
+.content-card__eyebrow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pricing-badge--inline {
+  position: static;
+}
+
 .content-card__eyebrow--link:hover { color: var(--brand-green-dark); }
 
 .content-card__author {
@@ -3061,4 +3075,56 @@ a.shared-content-chip:hover {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+/* --- FollowButton (component existed but had no styles/UI entry point yet) --- */
+
+.follow-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--brand-green);
+  background: var(--brand-green);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.follow-button:hover {
+  transform: translateY(-1px);
+}
+
+.follow-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Already-following state hints "unfollow" on hover, same red used by .btn-danger. */
+.follow-button--following {
+  background: transparent;
+  border-color: var(--line-soft);
+  color: var(--ink-body);
+}
+
+.follow-button--following:hover {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.follow-counts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+}
+
+.follow-counts strong {
+  color: var(--ink-strong);
 }

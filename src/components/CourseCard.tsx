@@ -6,7 +6,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Course } from '../types/api';
-import { ExternalLink, GraduationCap } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { ShareMenu } from './ShareMenu';
 
 interface CourseCardProps {
@@ -14,35 +14,37 @@ interface CourseCardProps {
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
+  const priceLabel = course.pricingType === 'Free' ? 'Free' : course.price || 'Paid';
+  const priceModifier = course.pricingType === 'Free' ? 'pricing-badge--free' : 'pricing-badge--paid';
+
   return (
     <article className="editorial-card content-card group">
-      <a
-        href={course.externalUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="content-card__media"
-      >
-        <span className={course.pricingType === 'Free' ? 'pricing-badge pricing-badge--free' : 'pricing-badge pricing-badge--paid'}>
-          {course.pricingType === 'Free' ? 'Free' : course.price || 'Paid'}
-        </span>
-        {course.thumbnailUrl ? (
+      {course.thumbnailUrl && (
+        <a
+          href={course.externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="content-card__media"
+        >
+          <span className={`pricing-badge ${priceModifier}`}>{priceLabel}</span>
           <img src={course.thumbnailUrl} alt={course.title} />
-        ) : (
-          <div className="content-card__visual content-card__visual--course">
-            <GraduationCap className="w-10 h-10" />
-          </div>
-        )}
-      </a>
+        </a>
+      )}
 
       <div className="content-card__body">
         <div className="content-card__copy">
-          <Link
-            to={`/courses?category=${course.courseCategoryId}`}
-            onClick={(e) => e.stopPropagation()}
-            className="content-card__eyebrow content-card__eyebrow--link"
-          >
-            {course.courseCategoryName}
-          </Link>
+          <div className="content-card__eyebrow-row">
+            <Link
+              to={`/courses?category=${course.courseCategoryId}`}
+              onClick={(e) => e.stopPropagation()}
+              className="content-card__eyebrow content-card__eyebrow--link"
+            >
+              {course.courseCategoryName}
+            </Link>
+            {!course.thumbnailUrl && (
+              <span className={`pricing-badge pricing-badge--inline ${priceModifier}`}>{priceLabel}</span>
+            )}
+          </div>
           <a href={course.externalUrl} target="_blank" rel="noopener noreferrer" className="block">
             <h3 className="content-card__title font-serif">{course.title}</h3>
           </a>

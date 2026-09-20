@@ -8,10 +8,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getShowcasePost, deleteShowcasePost } from '../api/showcase';
 import { ShowcaseReactionBar } from '../components/ShowcaseReactionBar';
-import { ShowcaseCommentSection } from '../components/ShowcaseCommentSection';
+import { ShowcaseCommentSection } from '../components/Showcasecommentsection';
 import { ArrowLeft, Wrench, AlertCircle, Trash2, ShieldCheck, Link2 } from 'lucide-react';
 import { useAuth } from '../store/authStore';
 import { SHARED_CONTENT_PATH } from '../components/ShowcaseCard';
+import { FollowButton } from '../components/FollowButton';
 
 export const ShowcasePostDetailPage: React.FC = () => {
   const { showcasePostId } = useParams<{ showcasePostId: string }>();
@@ -75,6 +76,7 @@ export const ShowcasePostDetailPage: React.FC = () => {
             </div>
             {post.authorName}
           </span>
+          <FollowButton userId={post.authorId} showCounts={false} />
           {post.toolsUsed && (
             <>
               <div className="w-1 h-1 rounded-full bg-stone-300"></div>
