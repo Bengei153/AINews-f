@@ -225,7 +225,7 @@ export const getAdminDrafts = async (): Promise<ArticleDetail[]> => {
   return response.data;
 };
 
-export const triggerNewsIngestion = async (): Promise<{ message: string }> => {
+export const triggerNewsIngestion = async (): Promise<{ message: string; runId?: string | null }> => {
   if (isDemoMode()) {
     await simulateNetworkDelay();
     return { message: 'News ingestion is not simulated in demo mode.' };

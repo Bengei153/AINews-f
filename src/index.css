@@ -3128,3 +3128,156 @@ a.shared-content-chip:hover {
 .follow-counts strong {
   color: var(--ink-strong);
 }
+
+
+/* =========================================================================
+   Admin: Ingestion Logs tab (components/IngestionLogsPanel.tsx)
+   Hand-written BEM — the stylesheet is static, so utility classes that
+   aren't already in this file don't exist.
+   ========================================================================= */
+.ingestion {
+  --ing-ok: #0f766e;
+  --ing-ok-soft: #dff2ed;
+  --ing-warn: #b45309;
+  --ing-warn-soft: #fef3c7;
+  --ing-bad: #b91c1c;
+  --ing-bad-soft: #fee2e2;
+  --ing-info: #1d4ed8;
+  --ing-info-soft: #dbeafe;
+  --ing-muted-soft: #eef1f0;
+  display: grid;
+  gap: 1rem;
+  color: var(--ink-body);
+}
+:root[data-theme='dark'] .ingestion {
+  --ing-ok: #6ee7b7;
+  --ing-ok-soft: rgba(52, 211, 153, 0.14);
+  --ing-warn: #fcd34d;
+  --ing-warn-soft: rgba(245, 158, 11, 0.14);
+  --ing-bad: #fca5a5;
+  --ing-bad-soft: rgba(248, 113, 113, 0.14);
+  --ing-info: #93c5fd;
+  --ing-info-soft: rgba(96, 165, 250, 0.14);
+  --ing-muted-soft: rgba(255, 255, 255, 0.06);
+}
+
+.ingestion__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.ingestion__title { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--ink-strong); }
+.ingestion__subtitle { margin: 0.25rem 0 0; font-size: 0.8rem; max-width: 42rem; }
+.ingestion__btn-icon { width: 0.9rem; height: 0.9rem; flex: none; }
+.ingestion__btn-icon--spin { animation: ingestion-spin 0.9s linear infinite; }
+.ingestion .btn-primary, .ingestion .btn-secondary { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+.ingestion__health {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+.ingestion__stat {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--surface-card);
+  border: 1px solid var(--line-soft);
+  border-radius: 0.75rem;
+}
+.ingestion__stat-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+.ingestion__stat-value { font-size: 0.9rem; font-weight: 600; color: var(--ink-strong); }
+.ingestion__stat-value small { font-weight: 400; color: var(--ink-muted); }
+.ingestion__stat-value code { font-size: 0.8rem; }
+
+.ingestion__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  border: 1px solid transparent;
+  background: var(--ing-muted-soft);
+  color: var(--ink-strong);
+}
+.ingestion__notice-icon { width: 1rem; height: 1rem; flex: none; margin-top: 0.1rem; }
+.ingestion__notice--ok { background: var(--ing-ok-soft); border-color: var(--ing-ok); }
+.ingestion__notice--warn { background: var(--ing-warn-soft); border-color: var(--ing-warn); }
+.ingestion__notice--bad { background: var(--ing-bad-soft); border-color: var(--ing-bad); }
+.ingestion__notice--info { background: var(--ing-info-soft); border-color: var(--ing-info); }
+
+.ingestion__layout { display: grid; grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); gap: 1rem; align-items: start; }
+@media (max-width: 860px) { .ingestion__layout { grid-template-columns: minmax(0, 1fr); } }
+
+.ingestion__runs, .ingestion__detail {
+  background: var(--surface-card);
+  border: 1px solid var(--line-soft);
+  border-radius: 0.9rem;
+  padding: 0.75rem;
+  min-width: 0;
+}
+.ingestion__detail { padding: 1rem; display: grid; gap: 0.85rem; }
+.ingestion__runs-head { display: flex; align-items: center; justify-content: space-between; padding: 0.15rem 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+.ingestion__icon-btn { display: inline-flex; padding: 0.3rem; border: 0; background: transparent; border-radius: 0.4rem; color: var(--ink-muted); cursor: pointer; }
+.ingestion__icon-btn:hover { background: var(--surface-soft); color: var(--ink-strong); }
+
+.ingestion__run-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; max-height: 34rem; overflow-y: auto; }
+.ingestion__run {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.6rem;
+  background: var(--surface-soft);
+  color: inherit;
+  cursor: pointer;
+}
+.ingestion__run:hover { border-color: var(--line-strong); }
+.ingestion__run--active { border-color: var(--brand-green); background: var(--brand-green-soft); }
+.ingestion__run-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.ingestion__run-time { font-size: 0.8rem; font-weight: 600; color: var(--ink-strong); }
+.ingestion__run-meta { font-size: 0.72rem; color: var(--ink-muted); }
+
+.ingestion__empty { margin: 0; padding: 0.75rem 0.25rem; font-size: 0.8rem; color: var(--ink-muted); }
+.ingestion__empty--bad { color: var(--ing-bad); }
+
+.ingestion__detail-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.ingestion__detail-title { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-size: 0.8rem; }
+
+.ingestion__counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: 0.5rem; margin: 0; }
+.ingestion__counts > div { padding: 0.5rem 0.65rem; background: var(--surface-soft); border: 1px solid var(--line-soft); border-radius: 0.6rem; min-width: 0; }
+.ingestion__counts dt { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+.ingestion__counts dd { margin: 0.1rem 0 0; font-size: 0.9rem; font-weight: 600; color: var(--ink-strong); overflow-wrap: anywhere; }
+
+.ingestion__log-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+.ingestion__toggle { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 500; letter-spacing: 0; text-transform: none; cursor: pointer; }
+
+.ingestion-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.12rem 0.55rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; background: var(--ing-muted-soft); color: var(--ink-body); }
+.ingestion-badge--ok { background: var(--ing-ok-soft); color: var(--ing-ok); }
+.ingestion-badge--warn { background: var(--ing-warn-soft); color: var(--ing-warn); }
+.ingestion-badge--bad { background: var(--ing-bad-soft); color: var(--ing-bad); }
+.ingestion-badge--info { background: var(--ing-info-soft); color: var(--ing-info); }
+.ingestion-badge__spinner { width: 0.7rem; height: 0.7rem; animation: ingestion-spin 0.9s linear infinite; }
+
+.ingestion-log { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line-soft); border-radius: 0.6rem; overflow: hidden; }
+.ingestion-log__row { display: flex; gap: 0.6rem; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--line-soft); font-size: 0.8rem; }
+.ingestion-log__row:last-child { border-bottom: 0; }
+.ingestion-log__row--warning { background: var(--ing-warn-soft); }
+.ingestion-log__row--error { background: var(--ing-bad-soft); }
+.ingestion-log__icon { width: 1rem; height: 1rem; flex: none; margin-top: 0.15rem; }
+.ingestion-log__icon--info { color: var(--ing-info); }
+.ingestion-log__icon--warn { color: var(--ing-warn); }
+.ingestion-log__icon--bad { color: var(--ing-bad); }
+.ingestion-log__body { min-width: 0; flex: 1; }
+.ingestion-log__line { display: flex; flex-wrap: wrap; gap: 0.15rem 0.6rem; align-items: baseline; }
+.ingestion-log__time { font-variant-numeric: tabular-nums; font-size: 0.72rem; color: var(--ink-muted); }
+.ingestion-log__stage { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-muted); min-width: 4.2rem; }
+.ingestion-log__message { color: var(--ink-strong); overflow-wrap: anywhere; flex: 1 1 14rem; }
+.ingestion-log__details { margin-top: 0.3rem; }
+.ingestion-log__details summary { cursor: pointer; font-size: 0.72rem; color: var(--ink-muted); }
+.ingestion-log__details pre { margin: 0.3rem 0 0; padding: 0.5rem 0.6rem; max-height: 16rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.72rem; line-height: 1.45; background: var(--surface-soft); border: 1px solid var(--line-soft); border-radius: 0.5rem; color: var(--ink-body); }
+
+@keyframes ingestion-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .ingestion__btn-icon--spin, .ingestion-badge__spinner { animation: none; }
+}
