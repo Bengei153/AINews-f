@@ -8,7 +8,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getShowcasePost, deleteShowcasePost } from '../api/showcase';
 import { ShowcaseReactionBar } from '../components/ShowcaseReactionBar';
-import { ShowcaseCommentSection } from '../components/Showcasecommentsection';
+import { ShowcaseCommentSection } from '../components/ShowcaseCommentSection';
 import { ArrowLeft, Wrench, AlertCircle, Trash2, ShieldCheck, Link2 } from 'lucide-react';
 import { useAuth } from '../store/authStore';
 import { SHARED_CONTENT_PATH } from '../components/ShowcaseCard';
