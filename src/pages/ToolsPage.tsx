@@ -6,24 +6,39 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAiTools } from '../api/aiTools';
+import { getTutorials } from '../api/tutorials';
 import { ToolCard } from '../components/ToolCard';
-import { AlertCircle, ArrowRight, Award, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react';
+import { TutorialCard } from '../components/TutorialCard';
+import { AlertCircle, ArrowRight, Award, GraduationCap, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 
-const FACETS = ['All', 'Generative AI', 'Analysis', 'DevOps', 'Creative', 'Research', 'Infrastructure'];
+const GOAL_FILTERS = [
+  { label: 'Explore all', facet: '' },
+  { label: 'Write & brainstorm', facet: 'Generative AI' },
+  { label: 'Study & research', facet: 'Research' },
+  { label: 'Create visuals', facet: 'Creative' },
+  { label: 'Work with data', facet: 'Analysis' },
+  { label: 'Build & automate', facet: 'DevOps' },
+];
 
 export const ToolsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFacet, setActiveFacet] = useState('All');
+  const [activeFacet, setActiveFacet] = useState('');
+  const activeGoalLabel = GOAL_FILTERS.find((goal) => goal.facet === activeFacet)?.label ?? 'your search';
 
   const { data: tools, isLoading } = useQuery({
     queryKey: ['ai-tools'],
     queryFn: () => getAiTools(false),
   });
 
+  const { data: tutorialsResult, isLoading: areGuidesLoading } = useQuery({
+    queryKey: ['tool-guides'],
+    queryFn: () => getTutorials({ pageNumber: 1, pageSize: 3 }),
+  });
+
   const filteredTools = React.useMemo(() => {
     if (!tools) return [];
     const q = searchQuery.toLowerCase().trim();
-    const facet = activeFacet === 'All' ? '' : activeFacet.toLowerCase();
+    const facet = activeFacet.toLowerCase();
 
     return tools.filter((tool) => {
       const name = tool.name.toLowerCase();
@@ -48,22 +63,22 @@ export const ToolsPage: React.FC = () => {
         <div>
           <div className="section-kicker">
             <Sparkles className="w-3.5 h-3.5" />
-            Curated Intelligence
+            Start with your goal
           </div>
           <h1 className="editorial-heading editorial-heading--page font-serif">
-            AI Directory <em>Spotlight</em>
+            Find an AI tool for what you want to <em>do.</em>
           </h1>
           <p className="editorial-lede">
-            Discover a vetted database of artificial intelligence tools built for students, developers, creators, and technical teams.
+            Explore approachable tools for writing, learning, creating, organizing, and building. No technical background required.
           </p>
           <div className="hero-stats hero-stats--inline">
-            <div>
-              <strong>120+</strong>
-              <span>Verified tools</span>
-            </div>
-            <div>
-              <strong>1.4k</strong>
-              <span>Weekly submissions</span>
+          <div>
+            <strong>Choose a goal</strong>
+            <span>Start with what you need</span>
+          </div>
+          <div>
+            <strong>Try one tool</strong>
+            <span>Learn as you go</span>
             </div>
           </div>
         </div>
@@ -71,15 +86,15 @@ export const ToolsPage: React.FC = () => {
           <div>
             <ShieldCheck className="w-5 h-5" />
             <span>
-              <strong>Vetted Accuracy</strong>
-              Every entry is checked for practical utility.
+              <strong>Clear starting points</strong>
+              Pick a tool based on the outcome you want, not unfamiliar jargon.
             </span>
           </div>
           <div>
             <Zap className="w-5 h-5" />
             <span>
-              <strong>Real-time Updates</strong>
-              Pricing and model changes are reviewed frequently.
+              <strong>Practical choices</strong>
+              Each listing helps you understand what a tool is useful for.
             </span>
           </div>
         </div>
@@ -90,21 +105,21 @@ export const ToolsPage: React.FC = () => {
           <Search className="w-4 h-4" />
           <input
             type="text"
-            placeholder="Search by tool name, capability, or tag..."
+            placeholder="Search a goal, task, or tool name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             id="tool-search-input"
           />
         </div>
-        <div className="facet-row" role="list" aria-label="Tool categories">
-          {FACETS.map((facet) => (
+        <div className="facet-row" role="list" aria-label="What do you want help with?">
+          {GOAL_FILTERS.map(({ label, facet }) => (
             <button
-              key={facet}
+              key={label}
               type="button"
               onClick={() => setActiveFacet(facet)}
               className={activeFacet === facet ? 'facet-chip facet-chip--active' : 'facet-chip'}
             >
-              {facet}
+              {label}
             </button>
           ))}
         </div>
@@ -125,13 +140,13 @@ export const ToolsPage: React.FC = () => {
           <AlertCircle className="w-12 h-12" />
           <p>No matching tools found</p>
           <span>
-            We could not find any curated resources for <strong>{searchQuery || activeFacet}</strong>.
+            We could not find any curated resources for <strong>{searchQuery || activeGoalLabel}</strong>.
           </span>
           <button
             type="button"
             onClick={() => {
               setSearchQuery('');
-              setActiveFacet('All');
+              setActiveFacet('');
             }}
             className="btn-secondary"
           >
@@ -167,6 +182,38 @@ export const ToolsPage: React.FC = () => {
           </section>
         </div>
       )}
+
+      <section className="content-section">
+        <div className="section-heading-row">
+          <div>
+            <h2 className="font-serif">
+              <GraduationCap className="w-5 h-5" />
+              Practical guides
+            </h2>
+            <p className="muted-copy">Simple walkthroughs that help you get useful results from a tool.</p>
+          </div>
+        </div>
+
+        {areGuidesLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="skeleton-card skeleton-card--tall animate-pulse" />
+            ))}
+          </div>
+        ) : !tutorialsResult?.items?.length ? (
+          <div className="empty-state">
+            <GraduationCap className="w-8 h-8" />
+            <p>Guides are coming soon</p>
+            <span>In the meantime, pick a tool above and explore what it can help you make.</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {tutorialsResult.items.map((tutorial) => (
+              <TutorialCard key={tutorial.id} tutorial={tutorial} />
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="metric-band">
         <div>

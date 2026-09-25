@@ -48,8 +48,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   const navItems = [
     { to: '/articles', label: 'Discover' },
-    { to: '/tutorials', label: 'Learn', activePaths: ['/tutorials', '/courses', '/videos'] },
-    { to: '/tools', label: 'Tools' },
+    { to: '/courses', label: 'Learn', activePaths: ['/courses', '/videos'] },
+    { to: '/tools', label: 'Tools', activePaths: ['/tools', '/tutorials'] },
     { to: '/showcase', label: 'Community' },
   ];
 

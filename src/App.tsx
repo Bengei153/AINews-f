@@ -16,7 +16,6 @@ const ArticleDetailPage = lazy(() =>
   import('./pages/ArticleDetailPage').then((module) => ({ default: module.ArticleDetailPage }))
 );
 const ToolsPage = lazy(() => import('./pages/ToolsPage').then((module) => ({ default: module.ToolsPage })));
-const TutorialsPage = lazy(() => import('./pages/TutorialsPage').then((module) => ({ default: module.TutorialsPage })));
 const TutorialDetailPage = lazy(() =>
   import('./pages/TutorialDetailPage').then((module) => ({ default: module.TutorialDetailPage }))
 );
@@ -77,7 +76,7 @@ export default function App() {
                 <Route path="/articles" element={<ArticlesPage />} />
                 <Route path="/articles/:slug" element={<ArticleDetailPage />} />
                 <Route path="/tools" element={<ToolsPage />} />
-                <Route path="/tutorials" element={<TutorialsPage />} />
+                <Route path="/tutorials" element={<Navigate to="/tools" replace />} />
                 <Route path="/tutorials/:slug" element={<TutorialDetailPage />} />
                                 <Route path="/videos" element={<VideosPage />} />
                 <Route path="/videos/:slug" element={<VideoDetailPage />} />

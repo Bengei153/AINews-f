@@ -136,7 +136,7 @@ export const HomePage: React.FC = () => {
               )
             ) : (
               <>
-                <Link to="/tutorials" className="btn-primary">
+                <Link to="/tools" className="btn-primary">
                   Start your first project
                   <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -194,7 +194,7 @@ export const HomePage: React.FC = () => {
             <strong>Clear, useful context</strong>
             <p>Explore AI ideas without needing to speak technical jargon.</p>
           </Link>
-          <Link to="/tutorials" className="feature-card">
+          <Link to="/tools" className="feature-card">
             <GraduationCap className="w-5 h-5" />
             <span>3. Make something</span>
             <strong>Guided first projects</strong>
@@ -425,7 +425,7 @@ export const HomePage: React.FC = () => {
           </p>
         </div>
         <div className="dark-cta-panel__links">
-          <Link to="/tutorials" className="btn-light">
+          <Link to="/tools" className="btn-light">
             <PlayCircle className="w-4 h-4" />
             Start with a guide
           </Link>

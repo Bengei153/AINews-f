@@ -7,14 +7,12 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const TABS = [
-  { to: '/tutorials', label: 'Tutorials' },
-  { to: '/videos', label: 'Videos' },
   { to: '/courses', label: 'Courses' },
+  { to: '/videos', label: 'Videos' },
 ];
 
-// Lets someone browsing Videos or Tutorials discover Courses (and vice
-// versa) without a dedicated top-level nav entry — Courses "lives inside"
-// both sections via this tab row, per how the feature was scoped.
+// Courses and videos are the two dedicated learning formats. Practical
+// tutorials live with the tools they help people use.
 export const LearningNavTabs: React.FC = () => {
   const location = useLocation();
 
