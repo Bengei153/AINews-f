@@ -100,7 +100,7 @@ export const HomePage: React.FC = () => {
         <div className="homepage-hero__copy">
           <div className="section-kicker">
             <Sparkles className="w-3.5 h-3.5" />
-            Curated intelligence hub
+            AI for everyday builders
           </div>
 
           <h1 className="editorial-heading editorial-heading--hero font-serif">
@@ -110,13 +110,13 @@ export const HomePage: React.FC = () => {
               </>
             ) : (
               <>
-                Deciphering the <em>AI Frontier.</em>
+                Turn curiosity into something <em>useful.</em>
               </>
             )}
           </h1>
 
           <p className="editorial-lede">
-            Your curated gateway to vetted artificial intelligence tools, research-grade insights, and practical tutorials designed for the modern creator.
+            Learn simple ways to use AI, find tools that fit your goals, and make something real — even if you are starting from zero.
           </p>
 
           <div className="hero-actions">
@@ -124,7 +124,7 @@ export const HomePage: React.FC = () => {
               user.interests.length === 0 ? (
                 <Link to="/settings" className="btn-primary">
                   <Sliders className="w-4 h-4" />
-                  Customize your Interests
+                  Choose what you want to explore
                 </Link>
               ) : (
                 <div className="interest-strip">
@@ -136,12 +136,12 @@ export const HomePage: React.FC = () => {
               )
             ) : (
               <>
-                <Link to="/register" className="btn-primary">
-                  Explore AI Directory
+                <Link to="/tutorials" className="btn-primary">
+                  Start your first project
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link to="/articles" className="btn-secondary">
-                  Read Latest Briefs
+                <Link to="/tools" className="btn-secondary">
+                  Find a tool for your goal
                 </Link>
               </>
             )}
@@ -149,16 +149,16 @@ export const HomePage: React.FC = () => {
 
           <div className="hero-stats">
             <div>
-              <strong>500+</strong>
-              <span>Vetted resources</span>
+              <strong>Start small</strong>
+              <span>Simple first steps</span>
             </div>
             <div>
-              <strong>48</strong>
-              <span>Weekly briefs</span>
+              <strong>No coding</strong>
+              <span>Needed to begin</span>
             </div>
             <div>
-              <strong>12k</strong>
-              <span>Active minds</span>
+              <strong>Make progress</strong>
+              <span>One useful idea at a time</span>
             </div>
           </div>
         </div>
@@ -175,30 +175,30 @@ export const HomePage: React.FC = () => {
       </section>
 
       <section className="editorial-section editorial-section--center">
-        <div className="section-kicker">Core Philosophy</div>
-        <h2 className="editorial-heading font-serif">Curated, Not Just Collected.</h2>
+        <div className="section-kicker">A clearer way in</div>
+        <h2 className="editorial-heading font-serif">You do not need a technical background to begin.</h2>
         <p className="section-copy">
-          Every resource in AI Brief is structured for discovery, practical value, and long-term reference.
+          Choose a goal, follow a practical guide, and use AI to turn an everyday idea into an outcome you can share.
         </p>
 
         <div className="feature-grid">
           <Link to="/tools" className="feature-card">
             <BookOpen className="w-5 h-5" />
-            <span>Resources</span>
-            <strong>Academic-Tech Directory</strong>
-            <p>Access a high-fidelity catalog of models and tools.</p>
+            <span>1. Find your fit</span>
+            <strong>Tools for real goals</strong>
+            <p>Find options for writing, studying, design, planning, and more.</p>
           </Link>
           <Link to="/articles" className="feature-card">
             <Newspaper className="w-5 h-5" />
-            <span>Intelligence</span>
-            <strong>Model Deep-Dives</strong>
-            <p>Technical breakdowns of architectures, costs, and benchmarks.</p>
+            <span>2. Understand the basics</span>
+            <strong>Clear, useful context</strong>
+            <p>Explore AI ideas without needing to speak technical jargon.</p>
           </Link>
           <Link to="/tutorials" className="feature-card">
             <GraduationCap className="w-5 h-5" />
-            <span>Automation</span>
-            <strong>Workflow Recipes</strong>
-            <p>Step-by-step guides for turning frontier tools into output.</p>
+            <span>3. Make something</span>
+            <strong>Guided first projects</strong>
+            <p>Follow simple steps to turn a tool into useful output.</p>
           </Link>
         </div>
       </section>
@@ -421,16 +421,16 @@ export const HomePage: React.FC = () => {
             Stay ahead on the <em>Frontier.</em>
           </h2>
           <p>
-            Join 12,500+ developers, students, and creators receiving weekly digests of curated tools and technical breakthroughs.
+            Explore approachable ideas, learn at your own pace, and see what people like you are making with AI.
           </p>
         </div>
         <div className="dark-cta-panel__links">
           <Link to="/tutorials" className="btn-light">
             <PlayCircle className="w-4 h-4" />
-            Start Learning
+            Start with a guide
           </Link>
           <Link to="/showcase" className="btn-ghost">
-            View Showcase
+            See what people are making
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

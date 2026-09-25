@@ -882,6 +882,7 @@ button, input, select, textarea { font: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background: #171717;
@@ -894,6 +895,7 @@ button, input, select, textarea { font: inherit; }
 }
 
 .site-topbar svg { color: #a7f3d0; }
+.site-topbar span { min-width: 0; }
 
 .site-header {
   position: sticky;
@@ -1310,6 +1312,18 @@ button, input, select, textarea { font: inherit; }
   border-bottom: 1px solid var(--line-soft);
   background: var(--surface-card);
   box-shadow: var(--shadow-editorial);
+}
+
+.drawer-utility-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  color: var(--ink-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .mobile-nav-link {

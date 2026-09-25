@@ -175,9 +175,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
 
           <div className="mobile-actions">
-            {user && <StreakBadge variant="compact" />}
             {user && <NotificationBell />}
-            <ThemeToggle compact />
             {user && user.role === 'Admin' && (
               <Link
                 to="/admin"
@@ -229,6 +227,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 Bookmarks
               </Link>
             )}
+
+            <div className="drawer-utility-row">
+              <span>Appearance</span>
+              <ThemeToggle compact />
+            </div>
             
             <hr className="drawer-rule" />
 
