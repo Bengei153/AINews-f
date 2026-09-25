@@ -40,16 +40,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     navigate('/login');
   };
 
-  const isActive = (path: string) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path));
+  const isActive = (paths: string | string[]) => {
+    const candidates = Array.isArray(paths) ? paths : [paths];
+    return candidates.some((path) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)));
+  };
   const isDark = theme === 'dark';
 
   const navItems = [
-    { to: '/', label: 'Home' },
-    { to: '/articles', label: 'Browse Articles' },
-    { to: '/tools', label: 'AI Directory' },
-    { to: '/tutorials', label: 'Tutorials' },
-    { to: '/videos', label: 'Videos' },
-    { to: '/showcase', label: 'Showcase' },
+    { to: '/articles', label: 'Discover' },
+    { to: '/tutorials', label: 'Learn', activePaths: ['/tutorials', '/courses', '/videos'] },
+    { to: '/tools', label: 'Tools' },
+    { to: '/showcase', label: 'Community' },
   ];
 
   const ThemeToggle = ({ compact = false }: { compact?: boolean }) => (
@@ -92,7 +93,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <Link
                 key={item.to}
                 to={item.to}
-                className={`nav-link ${isActive(item.to) ? 'nav-link--active' : ''}`}
+                className={`nav-link ${isActive(item.activePaths ?? item.to) ? 'nav-link--active' : ''}`}
               >
                 {item.label}
               </Link>
@@ -213,7 +214,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 key={item.to}
                 to={item.to}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`mobile-nav-link ${isActive(item.to) ? 'mobile-nav-link--active' : ''}`}
+                className={`mobile-nav-link ${isActive(item.activePaths ?? item.to) ? 'mobile-nav-link--active' : ''}`}
               >
                 {item.label}
               </Link>
