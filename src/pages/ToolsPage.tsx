@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { getAiTools } from '../api/aiTools';
 import { getTutorials } from '../api/tutorials';
 import { ToolCard } from '../components/ToolCard';
@@ -207,11 +208,22 @@ export const ToolsPage: React.FC = () => {
             <span>In the meantime, pick a tool above and explore what it can help you make.</span>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {tutorialsResult.items.map((tutorial) => (
               <TutorialCard key={tutorial.id} tutorial={tutorial} />
             ))}
           </div>
+
+          {tutorialsResult.totalPages > 1 && (
+            <div className="flex justify-center pt-6">
+              <Link to="/guides" className="btn-secondary">
+                View all guides
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          )}
+          </>
         )}
       </section>
 

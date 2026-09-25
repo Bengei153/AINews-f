@@ -8,7 +8,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { getTutorials } from '../api/tutorials';
 import { TutorialCard } from '../components/TutorialCard';
-import { LearningNavTabs } from '../components/LearningNavTabs';
 import { DifficultyLevel } from '../types/api';
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 
@@ -77,16 +76,15 @@ export const TutorialsPage: React.FC = () => {
     <div className="listing-page animate-in fade-in duration-200">
       <div className="listing-header">
         <div className="space-y-3">
-          <LearningNavTabs />
           <div className="section-kicker">
             <GraduationCap className="w-3.5 h-3.5" />
-            Academic Learning Center
+            Practical guides
           </div>
           <h1 className="editorial-heading editorial-heading--page font-serif">
-            Master the <em>Intelligence</em> economy.
+            Learn by <em>doing.</em>
           </h1>
           <p className="editorial-lede">
-            Structured guides on how to actually use AI tools, from foundations to advanced deployment strategies.
+            Browse step-by-step guides for getting useful results from AI tools, whether you are just starting or ready to go further.
           </p>
         </div>
 

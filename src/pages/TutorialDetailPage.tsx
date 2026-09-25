@@ -41,7 +41,7 @@ export const TutorialDetailPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: deleteTutorial,
     onSuccess: () => {
-      navigate('/tools');
+      navigate('/guides');
     },
     onError: (err: any) => {
       alert(err?.detail || 'Failed to delete tutorial.');
@@ -68,16 +68,16 @@ export const TutorialDetailPage: React.FC = () => {
       <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center max-w-lg mx-auto space-y-4">
         <AlertCircle className="w-12 h-12 text-stone-300 mx-auto" />
         <h3 className="font-serif text-lg font-bold text-stone-800">Tutorial not found</h3>
-        <Link to="/tools" className="text-xs font-bold text-emerald-700 underline">Back to Tools</Link>
+        <Link to="/guides" className="text-xs font-bold text-emerald-700 underline">Back to Guides</Link>
       </div>
     );
   }
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-200">
-      <Link to="/tools" className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 transition-colors">
+      <Link to="/guides" className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 transition-colors">
         <ArrowLeft className="w-3.5 h-3.5" />
-        Back to Tools
+        Back to Guides
       </Link>
 
       {tutorial.coverImageUrl && (
