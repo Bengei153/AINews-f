@@ -18,6 +18,7 @@ import { getCourseCategories, createCourseCategory, deleteCourseCategory } from 
 import { getAiTaskConfigs, setAiTaskConfig, getArticleWritingTemplate, updateArticleWritingTemplate } from '../../api/aiSettings';
 import { ImageUploadWidget } from '../../components/ImageUploadWidget';
 import { IngestionLogsPanel } from '../../components/IngestionLogsPanel';
+import { AiToolDiscoveryPanel } from '../../components/AiToolDiscoveryPanel';
 import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap, Trash2, PlayCircle, Search, Cpu } from 'lucide-react';
 import { DifficultyLevel, AiProvider, AiTask } from '../../types/api';
 
@@ -1164,6 +1165,12 @@ export const AdminPage: React.FC = () => {
 
           </form>
         </section>
+      )}
+
+      {activeTab === 'tool' && (
+        <div className="max-w-2xl mt-8">
+          <AiToolDiscoveryPanel onNotify={showNotification} />
+        </div>
       )}
 
       {/* TAB 4: COMPOSE TAXONOMY (CATEGORY & TAG FORM) */}
