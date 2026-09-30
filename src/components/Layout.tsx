@@ -50,6 +50,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { to: '/articles', label: 'Discover' },
     { to: '/courses', label: 'Learn', activePaths: ['/courses', '/videos'] },
     { to: '/tools', label: 'Tools', activePaths: ['/tools', '/tutorials'] },
+    { to: '/make-money', label: 'Make Money' },
     { to: '/showcase', label: 'Community' },
   ];
 

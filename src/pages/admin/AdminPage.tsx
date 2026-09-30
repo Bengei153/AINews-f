@@ -19,6 +19,7 @@ import { getAiTaskConfigs, setAiTaskConfig, getArticleWritingTemplate, updateArt
 import { ImageUploadWidget } from '../../components/ImageUploadWidget';
 import { IngestionLogsPanel } from '../../components/IngestionLogsPanel';
 import { AiToolDiscoveryPanel } from '../../components/AiToolDiscoveryPanel';
+import { EarnStoryDiscoveryPanel } from '../../components/EarnStoryDiscoveryPanel';
 import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap, Trash2, PlayCircle, Search, Cpu } from 'lucide-react';
 import { DifficultyLevel, AiProvider, AiTask } from '../../types/api';
 
@@ -40,7 +41,7 @@ const primaryButtonClass =
 
 export const AdminPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'taxonomy' | 'tutorial' | 'video' | 'course' | 'ai-settings' | 'ingestion'>('queue');
+  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'earn-story' | 'taxonomy' | 'tutorial' | 'video' | 'course' | 'ai-settings' | 'ingestion'>('queue');
   const [focusRunId, setFocusRunId] = useState<string | null>(null);
   const clearFocusRun = useCallback(() => setFocusRunId(null), []);
 
@@ -669,6 +670,20 @@ export const AdminPage: React.FC = () => {
           Spotlight Tool
         </button>
         <button
+          onClick={() => setActiveTab('earn-story')}
+          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
+            activeTab === 'earn-story'
+              ? 'bg-stone-900 text-white shadow-sm'
+              : 'text-stone-500 hover:text-stone-950 hover:bg-stone-50'
+          }`}
+          id="admin-tab-earn-story"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'earn-story'}
+        >
+          Make Money Stories
+        </button>
+        <button
           onClick={() => setActiveTab('taxonomy')}
           className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
             activeTab === 'taxonomy'
@@ -1170,6 +1185,12 @@ export const AdminPage: React.FC = () => {
       {activeTab === 'tool' && (
         <div className="max-w-2xl mt-8">
           <AiToolDiscoveryPanel onNotify={showNotification} />
+        </div>
+      )}
+
+      {activeTab === 'earn-story' && (
+        <div className="max-w-3xl mt-8">
+          <EarnStoryDiscoveryPanel onNotify={showNotification} />
         </div>
       )}
 

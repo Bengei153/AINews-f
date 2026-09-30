@@ -163,6 +163,41 @@ export interface AITool {
   logoUrl?: string | null;
 }
 
+export interface EarnStoryCard {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  channelName: string;
+  whatTheyBuilt: string;
+  toolsUsedText: string; // comma-separated
+  startupCost: string;
+  timeToFirstIncome: string;
+  claimedEarnings: string;
+  coverImageUrl: string | null;
+  youTubeVideoId: string;
+  created: string;
+}
+
+export interface EarnStoryDetail {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  channelName: string;
+  videoUrl: string;
+  youTubeVideoId: string;
+  whatTheyBuilt: string;
+  detailedSummary: string; // Markdown
+  toolsUsedText: string; // comma-separated
+  startupCost: string;
+  timeToFirstIncome: string;
+  claimedEarnings: string;
+  caveats: string;
+  coverImageUrl: string | null;
+  created: string;
+}
+
 export interface Interest {
   id: string;
   name: string;

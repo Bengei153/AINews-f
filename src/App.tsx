@@ -41,6 +41,12 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage').then((module) => ({
 const BookmarksPage = lazy(() =>
   import('./pages/BookmarksPage').then((module) => ({ default: module.BookmarksPage }))
 );
+const MakeMoneyPage = lazy(() =>
+  import('./pages/MakeMoneyPage').then((module) => ({ default: module.MakeMoneyPage }))
+);
+const EarnStoryDetailPage = lazy(() =>
+  import('./pages/EarnStoryDetailPage').then((module) => ({ default: module.EarnStoryDetailPage }))
+);
 const AdminPage = lazy(() => import('./pages/admin/AdminPage').then((module) => ({ default: module.AdminPage })));
 
 // Instantiate the global TanStack Query Client
@@ -94,6 +100,8 @@ export default function App() {
                                 <Route path="/videos" element={<VideosPage />} />
                 <Route path="/videos/:slug" element={<VideoDetailPage />} />
                 <Route path="/courses" element={<CoursesPage />} />
+                <Route path="/make-money" element={<MakeMoneyPage />} />
+                <Route path="/make-money/:slug" element={<EarnStoryDetailPage />} />
                 <Route path="/showcase" element={<ShowcasePage />} />
                 <Route path="/showcase/:showcasePostId" element={<ShowcasePostDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />
