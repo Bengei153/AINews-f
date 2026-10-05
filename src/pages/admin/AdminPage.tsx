@@ -20,6 +20,7 @@ import { ImageUploadWidget } from '../../components/ImageUploadWidget';
 import { IngestionLogsPanel } from '../../components/IngestionLogsPanel';
 import { AiToolDiscoveryPanel } from '../../components/AiToolDiscoveryPanel';
 import { EarnStoryDiscoveryPanel } from '../../components/EarnStoryDiscoveryPanel';
+import { PremiumSubscribersPanel } from '../../components/PremiumSubscribersPanel';
 import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap, Trash2, PlayCircle, Search, Cpu } from 'lucide-react';
 import { DifficultyLevel, AiProvider, AiTask } from '../../types/api';
 
@@ -41,7 +42,7 @@ const primaryButtonClass =
 
 export const AdminPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'earn-story' | 'taxonomy' | 'tutorial' | 'video' | 'course' | 'ai-settings' | 'ingestion'>('queue');
+  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'earn-story' | 'premium' | 'taxonomy' | 'tutorial' | 'video' | 'course' | 'ai-settings' | 'ingestion'>('queue');
   const [focusRunId, setFocusRunId] = useState<string | null>(null);
   const clearFocusRun = useCallback(() => setFocusRunId(null), []);
 
@@ -684,6 +685,20 @@ export const AdminPage: React.FC = () => {
           Make Money Stories
         </button>
         <button
+          onClick={() => setActiveTab('premium')}
+          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
+            activeTab === 'premium'
+              ? 'bg-stone-900 text-white shadow-sm'
+              : 'text-stone-500 hover:text-stone-950 hover:bg-stone-50'
+          }`}
+          id="admin-tab-premium"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'premium'}
+        >
+          Premium
+        </button>
+        <button
           onClick={() => setActiveTab('taxonomy')}
           className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
             activeTab === 'taxonomy'
@@ -1191,6 +1206,12 @@ export const AdminPage: React.FC = () => {
       {activeTab === 'earn-story' && (
         <div className="max-w-3xl mt-8">
           <EarnStoryDiscoveryPanel onNotify={showNotification} />
+        </div>
+      )}
+
+      {activeTab === 'premium' && (
+        <div className="max-w-3xl mt-8">
+          <PremiumSubscribersPanel />
         </div>
       )}
 

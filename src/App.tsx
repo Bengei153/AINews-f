@@ -47,6 +47,13 @@ const MakeMoneyPage = lazy(() =>
 const EarnStoryDetailPage = lazy(() =>
   import('./pages/EarnStoryDetailPage').then((module) => ({ default: module.EarnStoryDetailPage }))
 );
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then((module) => ({ default: module.ProjectsPage })));
+const ProjectDetailPage = lazy(() =>
+  import('./pages/ProjectDetailPage').then((module) => ({ default: module.ProjectDetailPage }))
+);
+const PremiumPage = lazy(() => import('./pages/PremiumPage').then((module) => ({ default: module.PremiumPage })));
+const CreatePage = lazy(() => import('./pages/CreatePage').then((module) => ({ default: module.CreatePage })));
+const MyPagesPage = lazy(() => import('./pages/MyPagesPage').then((module) => ({ default: module.MyPagesPage })));
 const AdminPage = lazy(() => import('./pages/admin/AdminPage').then((module) => ({ default: module.AdminPage })));
 
 // Instantiate the global TanStack Query Client
@@ -102,6 +109,33 @@ export default function App() {
                 <Route path="/courses" element={<CoursesPage />} />
                 <Route path="/make-money" element={<MakeMoneyPage />} />
                 <Route path="/make-money/:slug" element={<EarnStoryDetailPage />} />
+                <Route path="/projects" element={<ProjectsPage />} />
+                <Route path="/projects/:slug" element={<ProjectDetailPage />} />
+                <Route path="/premium" element={<PremiumPage />} />
+                <Route
+                  path="/create"
+                  element={
+                    <ProtectedRoute>
+                      <CreatePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/create/:pageId"
+                  element={
+                    <ProtectedRoute>
+                      <CreatePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/my-pages"
+                  element={
+                    <ProtectedRoute>
+                      <MyPagesPage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/showcase" element={<ShowcasePage />} />
                 <Route path="/showcase/:showcasePostId" element={<ShowcasePostDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />

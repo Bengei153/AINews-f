@@ -51,6 +51,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { to: '/courses', label: 'Learn', activePaths: ['/courses', '/videos'] },
     { to: '/tools', label: 'Tools', activePaths: ['/tools', '/tutorials'] },
     { to: '/make-money', label: 'Make Money' },
+    { to: '/projects', label: 'Projects', activePaths: ['/projects', '/create', '/my-pages'] },
     { to: '/showcase', label: 'Community' },
   ];
 

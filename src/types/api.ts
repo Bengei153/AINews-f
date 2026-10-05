@@ -205,6 +205,35 @@ export interface Interest {
   description: string;
 }
 
+export interface CreatedPageCard {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  shortDescription: string;
+  toolsUsedText: string; // comma-separated
+  deliveryMode: 'Download' | 'Link' | 'ConnectBackend';
+  coverImageUrl: string | null;
+  viewCount: number;
+  created: string;
+}
+
+export interface CreatedPageDetail {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  shortDescription: string;
+  detailedDescription: string; // Markdown
+  toolsUsedText: string;
+  deliveryMode: 'Download' | 'Link' | 'ConnectBackend';
+  deliveryUrl: string;
+  coverImageUrl: string | null;
+  creatorName: string;
+  viewCount: number;
+  created: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
