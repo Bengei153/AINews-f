@@ -34,7 +34,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool }) => {
         <div className="tool-card__header">
           <div className="tool-card__identity">
             {showLogo && (
-              <img
+              <img loading="lazy" decoding="async"
                 src={tool.logoUrl ?? undefined}
                 alt={`${tool.name} logo`}
                 className="tool-card__logo"

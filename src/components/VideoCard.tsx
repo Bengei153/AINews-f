@@ -17,7 +17,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
     <article className="editorial-card content-card group">
       <Link to={`/videos/${video.slug}`} className="content-card__media content-card__media--video">
         {video.thumbnailUrl && (
-          <img src={video.thumbnailUrl} alt={video.title} />
+          <img loading="lazy" decoding="async" src={video.thumbnailUrl} alt={video.title} />
         )}
         <div className="content-card__play">
           <PlayCircle className="w-12 h-12" />

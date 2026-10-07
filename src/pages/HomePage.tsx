@@ -4,6 +4,10 @@
  */
 
 import React from 'react';
+import { DiscoveryHero } from '../components/DiscoveryHero';
+import { DiscoveryPaths } from '../components/DiscoveryPaths';
+import { LearningProgress } from '../components/LearningProgress';
+import { ContentState } from '../components/ContentState';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../store/authStore';
@@ -30,17 +34,17 @@ import { Article } from '../types/api';
 export const HomePage: React.FC = () => {
   const { user, bookmarks } = useAuth();
 
-  const { data: recentArticles, isLoading: isArticlesLoading } = useQuery({
+  const { data: recentArticles, isLoading: isArticlesLoading, isError: articlesError, refetch: retryArticles } = useQuery({
     queryKey: ['recent-articles'],
     queryFn: () => getArticles({ pageSize: 6, pageNumber: 1 }),
   });
 
-  const { data: featuredTools, isLoading: isToolsLoading } = useQuery({
+  const { data: featuredTools, isLoading: isToolsLoading, isError: toolsError, refetch: retryTools } = useQuery({
     queryKey: ['featured-tools'],
     queryFn: () => getAiTools(true),
   });
 
-  const { data: featuredCourses, isLoading: isCoursesLoading } = useQuery({
+  const { data: featuredCourses, isLoading: isCoursesLoading, isError: coursesError, refetch: retryCourses } = useQuery({
     queryKey: ['home-courses'],
     queryFn: () => getCourses({ pageSize: 3 }),
   });
@@ -48,7 +52,7 @@ export const HomePage: React.FC = () => {
   const featuredTool = featuredTools?.[0];
 
   const personalizedArticles = React.useMemo(() => {
-    if (!user || !user.interests || user.interests.length === 0 || !recentArticles?.items) {
+    if (!user || !user.interests || (user.interests ?? []).length === 0 || !recentArticles?.items) {
       return [];
     }
 
@@ -95,122 +99,19 @@ export const HomePage: React.FC = () => {
     visibleRecentArticles.length > 0 && visibleRecentArticles.every((art) => !art.coverImageUrl?.trim());
 
   return (
-    <div className="home-page animate-in fade-in duration-200">
-      <section className="homepage-hero">
-        <div className="homepage-hero__copy">
-          <div className="section-kicker">
-            <Sparkles className="w-3.5 h-3.5" />
-            AI for everyday builders
-          </div>
-
-          <h1 className="editorial-heading editorial-heading--hero font-serif">
-            {user ? (
-              <>
-                Welcome back, <em>{user.fullName.split(' ')[0]}</em>.
-              </>
-            ) : (
-              <>
-                Turn curiosity into something <em>useful.</em>
-              </>
-            )}
-          </h1>
-
-          <p className="editorial-lede">
-            Learn simple ways to use AI, find tools that fit your goals, and make something real — even if you are starting from zero.
-          </p>
-
-          <div className="hero-actions">
-            {user ? (
-              user.interests.length === 0 ? (
-                <Link to="/settings" className="btn-primary">
-                  <Sliders className="w-4 h-4" />
-                  Choose what you want to explore
-                </Link>
-              ) : (
-                <div className="interest-strip">
-                  <span>My feed filters:</span>
-                  {user.interests.map((interest) => (
-                    <strong key={interest}>{interest}</strong>
-                  ))}
-                </div>
-              )
-            ) : (
-              <>
-                <Link to="/tools" className="btn-primary">
-                  Start your first project
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link to="/tools" className="btn-secondary">
-                  Find a tool for your goal
-                </Link>
-              </>
-            )}
-          </div>
-
-          <div className="hero-stats">
-            <div>
-              <strong>Start small</strong>
-              <span>Simple first steps</span>
-            </div>
-            <div>
-              <strong>No coding</strong>
-              <span>Needed to begin</span>
-            </div>
-            <div>
-              <strong>Make progress</strong>
-              <span>One useful idea at a time</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="homepage-hero__visual" aria-hidden="true">
-          <div className="hero-research-card">
-            <div className="hero-research-card__image"></div>
-            <div className="hero-research-card__caption">
-              <span>Featured Brief</span>
-              <strong>The Rise of Multi-Modal Agents</strong>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="editorial-section editorial-section--center">
-        <div className="section-kicker">A clearer way in</div>
-        <h2 className="editorial-heading font-serif">You do not need a technical background to begin.</h2>
-        <p className="section-copy">
-          Choose a goal, follow a practical guide, and use AI to turn an everyday idea into an outcome you can share.
-        </p>
-
-        <div className="feature-grid">
-          <Link to="/tools" className="feature-card">
-            <BookOpen className="w-5 h-5" />
-            <span>1. Find your fit</span>
-            <strong>Tools for real goals</strong>
-            <p>Find options for writing, studying, design, planning, and more.</p>
-          </Link>
-          <Link to="/articles" className="feature-card">
-            <Newspaper className="w-5 h-5" />
-            <span>2. Understand the basics</span>
-            <strong>Clear, useful context</strong>
-            <p>Explore AI ideas without needing to speak technical jargon.</p>
-          </Link>
-          <Link to="/tools" className="feature-card">
-            <GraduationCap className="w-5 h-5" />
-            <span>3. Make something</span>
-            <strong>Guided first projects</strong>
-            <p>Follow simple steps to turn a tool into useful output.</p>
-          </Link>
-        </div>
-      </section>
+    <div className="home-page discovery-home">
+      <DiscoveryHero article={visibleRecentArticles[0]} />
+      <LearningProgress />
+      <DiscoveryPaths />
 
       <div className="content-layout">
         <div className="content-layout__main">
-          {user && user.interests.length > 0 && (
+          {user && (user.interests ?? []).length > 0 && (
             <section className="content-section">
               <div className="section-heading-row">
                 <h2 className="font-serif">
                   <Sliders className="w-5 h-5" />
-                  For You ({user.interests.join(', ')})
+                  Picked for your interests
                 </h2>
                 <Link to="/settings" className="text-link">
                   Edit Interests
@@ -227,6 +128,8 @@ export const HomePage: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              ) : articlesError ? (
+                <ContentState error title="Your feed couldn’t load" description="Please check your connection and try again." retry={() => void retryArticles()} />
               ) : visiblePersonalizedArticles.length === 0 ? (
                 <div className="empty-state">
                   <Sliders className="w-8 h-8" />
@@ -270,7 +173,7 @@ export const HomePage: React.FC = () => {
                 ))}
               </div>
             ) : visibleRecentArticles.length === 0 ? (
-              <p className="muted-copy">No briefings found.</p>
+              <ContentState error={articlesError} retry={() => void retryArticles()} title={articlesError ? "We couldn’t load the latest briefings" : "A new perspective is on its way"} description={articlesError ? "Please check your connection and try again." : "Explore a practical guide while new briefings arrive."} to="/guides" action="Explore guides" />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {visibleRecentArticles.map((art) => (
@@ -288,7 +191,7 @@ export const HomePage: React.FC = () => {
             <div className="section-heading-row">
               <h2 className="font-serif">
                 <GraduationCap className="w-5 h-5" />
-                Full Courses
+                Go deeper, at your own pace
               </h2>
               <Link to="/courses" className="text-link text-link--muted">
                 View all courses
@@ -297,7 +200,7 @@ export const HomePage: React.FC = () => {
             </div>
 
             {isCoursesLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="skeleton-card animate-pulse">
                     <div className="w-24 h-4 bg-stone-200 rounded"></div>
@@ -307,9 +210,9 @@ export const HomePage: React.FC = () => {
                 ))}
               </div>
             ) : !featuredCourses?.items || featuredCourses.items.length === 0 ? (
-              <p className="muted-copy">No courses yet — check back soon.</p>
+              <ContentState error={coursesError} retry={() => void retryCourses()} title={coursesError ? "Learning resources couldn’t load" : "More learning is on its way"} description="You can still explore step-by-step guides and hands-on projects." to="/guides" action="Find a guide" />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {featuredCourses.items.map((course) => (
                   <CourseCard key={course.id} course={course} />
                 ))}
@@ -322,7 +225,7 @@ export const HomePage: React.FC = () => {
           <section className="spotlight-panel">
             <h2 className="font-serif">
               <Sparkles className="w-4 h-4" />
-              AI Tool Spotlight
+              Worth a closer look
             </h2>
 
             {isToolsLoading ? (
@@ -331,11 +234,11 @@ export const HomePage: React.FC = () => {
                 <div className="w-full h-12 bg-stone-200 rounded"></div>
               </div>
             ) : !featuredTool ? (
-              <p>No spotlight tool configured today.</p>
+              <ContentState error={toolsError} retry={() => void retryTools()} title={toolsError ? "The spotlight couldn’t load" : "Discover your next useful tool"} description="Explore the directory and find something that fits your goals." to="/tools" action="Browse tools" />
             ) : (
               <div className="space-y-4">
                 <p className="sidebar-copy">
-                  Our editors select and verify one tool every day to showcase exceptional utility and ease-of-use.
+                  A featured tool to help turn everyday curiosity into something useful.
                 </p>
                 <ToolCard tool={featuredTool} />
                 <Link to="/tools" className="text-link text-link--center">
@@ -357,7 +260,7 @@ export const HomePage: React.FC = () => {
                 <div className="empty-state empty-state--compact">
                   <Bookmark className="w-6 h-6" />
                   <p>No bookmarks saved</p>
-                  <span>Click the star icon on any briefing card to save it for quick reference.</span>
+                  <span>Tap the bookmark icon on any briefing card to save it for quick reference.</span>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -425,7 +328,7 @@ export const HomePage: React.FC = () => {
           </p>
         </div>
         <div className="dark-cta-panel__links">
-          <Link to="/tools" className="btn-light">
+          <Link to="/guides" className="btn-light">
             <PlayCircle className="w-4 h-4" />
             Start with a guide
           </Link>

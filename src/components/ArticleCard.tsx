@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { Article, ArticlePillar } from '../types/api';
 import { Bookmark, Clock, Sparkles } from 'lucide-react';
@@ -40,20 +41,27 @@ const PILLAR_STYLES: Record<ArticlePillar, { badge: string; text: string }> = {
 export const ArticleCard: React.FC<ArticleCardProps> = ({ article, hideMissingImagePlaceholder = false }) => {
   const { user, bookmarks, toggleBookmark } = useAuth();
 
+  const navigate = useNavigate();
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [imageFailed, setImageFailed] = useState(false);
   const isBookmarked = bookmarks.some((b) => b.articleId === article.id);
 
   const handleBookmarkToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!user) {
-      alert('Please log in or sign up to bookmark this article.');
+      navigate('/login');
       return;
     }
+    if (saving) return;
+    setSaving(true); setFeedback('');
     try {
       await toggleBookmark(article.id);
+      setFeedback(isBookmarked ? 'Removed from your bookmarks.' : 'Saved to your bookmarks.');
     } catch (err: any) {
-      alert(err.detail || 'Failed to toggle bookmark.');
-    }
+      setFeedback(err.detail || 'Could not save. Please try again.');
+    } finally { setSaving(false); }
   };
 
   const pillarStyle = PILLAR_STYLES[article.pillar] || {
@@ -61,7 +69,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, hideMissingIm
     text: article.pillar,
   };
 
-  const coverImageUrl = article.coverImageUrl?.trim();
+  const coverImageUrl = imageFailed ? undefined : article.coverImageUrl?.trim();
   const visualClass = `content-card__visual content-card__visual--${article.pillar}`;
   const shouldRenderMedia = Boolean(coverImageUrl) || !hideMissingImagePlaceholder;
 
@@ -79,7 +87,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, hideMissingIm
       {shouldRenderMedia && (
         <Link to={`/articles/${article.slug}`} className="content-card__media" aria-label={article.title}>
           {coverImageUrl ? (
-            <img src={coverImageUrl} alt={article.title} />
+            <img src={coverImageUrl} alt="" loading="lazy" decoding="async" onError={() => setImageFailed(true)} />
           ) : (
             <div className={visualClass}>
               <Sparkles className="w-7 h-7" />
@@ -101,6 +109,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, hideMissingIm
               : 'bg-stone-50 text-stone-400 hover:text-stone-700 hover:bg-stone-100'
           }`}
           title={isBookmarked ? 'Remove Bookmark' : 'Add Bookmark'}
+          aria-label={isBookmarked ? `Remove ${article.title} from bookmarks` : `Save ${article.title} to bookmarks`}
+          aria-pressed={isBookmarked}
+          aria-busy={saving}
+          disabled={saving}
           type="button"
         >
           <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-500' : ''}`} />
@@ -128,6 +140,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, hideMissingIm
         </div>
       </div>
 
+      <p className="card-feedback" role="status" aria-live="polite">{feedback}</p>
     </article>
   );
 };

@@ -27,7 +27,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           className="content-card__media"
         >
           <span className={`pricing-badge ${priceModifier}`}>{priceLabel}</span>
-          <img src={course.thumbnailUrl} alt={course.title} />
+          <img loading="lazy" decoding="async" src={course.thumbnailUrl} alt={course.title} />
         </a>
       )}
 

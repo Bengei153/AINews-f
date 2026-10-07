@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getAiTools } from '../api/aiTools';
 import { getTutorials } from '../api/tutorials';
+import { ContentState } from '../components/ContentState';
 import { ToolCard } from '../components/ToolCard';
 import { TutorialCard } from '../components/TutorialCard';
 import { AlertCircle, ArrowRight, Award, GraduationCap, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react';
@@ -26,7 +27,7 @@ export const ToolsPage: React.FC = () => {
   const [activeFacet, setActiveFacet] = useState('');
   const activeGoalLabel = GOAL_FILTERS.find((goal) => goal.facet === activeFacet)?.label ?? 'your search';
 
-  const { data: tools, isLoading } = useQuery({
+  const { data: tools, isLoading, isError: toolsError, refetch: retryTools } = useQuery({
     queryKey: ['ai-tools'],
     queryFn: () => getAiTools(false),
   });
@@ -110,14 +111,16 @@ export const ToolsPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             id="tool-search-input"
+            aria-label="Search AI tools by goal, task, or name"
           />
         </div>
-        <div className="facet-row" role="list" aria-label="What do you want help with?">
+        <div className="facet-row" role="group" aria-label="What do you want help with?">
           {GOAL_FILTERS.map(({ label, facet }) => (
             <button
               key={label}
               type="button"
               onClick={() => setActiveFacet(facet)}
+              aria-pressed={activeFacet === facet}
               className={activeFacet === facet ? 'facet-chip facet-chip--active' : 'facet-chip'}
             >
               {label}
@@ -136,6 +139,8 @@ export const ToolsPage: React.FC = () => {
             </div>
           ))}
         </div>
+      ) : toolsError ? (
+        <ContentState error title="Tools couldn’t load" description="Please check your connection and try again." retry={() => void retryTools()} />
       ) : filteredTools.length === 0 ? (
         <div className="empty-state empty-state--large">
           <AlertCircle className="w-12 h-12" />

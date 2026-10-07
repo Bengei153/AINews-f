@@ -23,7 +23,7 @@ export const TutorialCard: React.FC<TutorialCardProps> = ({ tutorial }) => {
     <article className="editorial-card content-card group">
       <Link to={`/tutorials/${tutorial.slug}`} className="content-card__media" aria-label={tutorial.title}>
         {tutorial.coverImageUrl ? (
-          <img src={tutorial.coverImageUrl} alt={tutorial.title} />
+          <img loading="lazy" decoding="async" src={tutorial.coverImageUrl} alt={tutorial.title} />
         ) : (
           <div className="content-card__visual content-card__visual--tutorial">
             <Layers className="w-7 h-7" />
