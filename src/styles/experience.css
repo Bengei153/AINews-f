@@ -289,6 +289,7 @@ a:active,button:active { transition-duration: 80ms; }
   html { scroll-padding-top: 80px; }
   .site-topbar { font-size: 9px; padding: 7px 10px; }
   .site-header__inner { min-height: 67px; padding-inline: 20px; }
+  .mobile-menu-toggle { display: none; }
   .brand-name { font-size: 25px; }
   .brand-tagline { font-size: 8px; }
   .brand-mark { width: 31px; height: 31px; }

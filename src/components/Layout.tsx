@@ -199,7 +199,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             )}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="icon-button icon-button--large"
+              className="icon-button icon-button--large mobile-menu-toggle"
               id="mobile-menu-toggle"
               type="button"
               aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
