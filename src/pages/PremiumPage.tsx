@@ -15,6 +15,7 @@ import { useAuth } from '../store/authStore';
 // The query param is only ever used to pick which banner to show — actual
 // Premium access is always re-checked live via usePremiumStatus, never
 // inferred from the query string itself.
+//omo
 export const PremiumPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const status = searchParams.get('status');
