@@ -10,7 +10,7 @@ import { usePremiumStatus } from '../hooks/usePremiumStatus';
 import { PremiumUpsell } from '../components/PremiumUpsell';
 import { useAuth } from '../store/authStore';
 
-// Doubles as the pricing page (no ?status=) and the landing page Flutterwave
+// Doubles as the pricing page (no ?status=) and the landing page the payment provider
 // redirects back to after checkout (?status=success|failed|cancelled|pending).
 // The query param is only ever used to pick which banner to show — actual
 // Premium access is always re-checked live via usePremiumStatus, never
@@ -22,17 +22,22 @@ export const PremiumPage: React.FC = () => {
   const { isPremium, expiresAt, isLoading, refetch } = usePremiumStatus();
 
   useEffect(() => {
-    // A webhook can finish verifying a moment after the redirect lands — one retry a couple
-    // seconds later catches that without the user needing to refresh manually.
-    if (status === 'success' || status === 'pending') {
-      const timer = setTimeout(() => refetch(), 2500);
-      return () => clearTimeout(timer);
+    // A webhook can finish verifying a moment after the redirect lands — re-check every couple
+    // of seconds (up to ~20s) until the backend actually reports Premium, rather than one retry.
+    if ((status === 'success' || status === 'pending') && !isPremium) {
+      let tries = 0;
+      const timer = setInterval(() => {
+        tries += 1;
+        refetch();
+        if (tries >= 8) clearInterval(timer);
+      }, 2500);
+      return () => clearInterval(timer);
     }
-  }, [status, refetch]);
+  }, [status, isPremium, refetch]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-200">
-      {status === 'success' && (
+      {status === 'success' && isPremium && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-start gap-3">
           <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
           <div>
@@ -59,7 +64,7 @@ export const PremiumPage: React.FC = () => {
           </div>
         </div>
       )}
-      {status === 'pending' && !isPremium && (
+      {(status === 'pending' || status === 'success') && !isPremium && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-3">
           <Clock className="w-5 h-5 text-amber-700 shrink-0 mt-0.5 animate-pulse" />
           <div>

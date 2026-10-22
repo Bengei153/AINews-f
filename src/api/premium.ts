@@ -19,9 +19,9 @@ export const getPremiumStatus = async (): Promise<SubscriptionStatus> => {
   return response.data;
 };
 
-// Starts a Flutterwave checkout and returns the hosted payment link — the
+// Starts a Paystack checkout and returns the hosted payment link — the
 // caller is expected to do `window.location.href = checkoutUrl`, since this
-// has to be a real top-level navigation (Flutterwave's page can't open in an
+// has to be a real top-level navigation (Paystack's page can't open in an
 // iframe).
 export const initiatePremiumCheckout = async (): Promise<{ checkoutUrl: string }> => {
   if (isDemoMode()) {

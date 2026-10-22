@@ -21,7 +21,7 @@ export const PremiumUpsell: React.FC<PremiumUpsellProps> = ({ context }) => {
     setIsRedirecting(true);
     try {
       const { checkoutUrl } = await initiatePremiumCheckout();
-      // A real top-level navigation, not a fetch — Flutterwave's hosted checkout can't run
+      // A real top-level navigation, not a fetch — Paystack's hosted checkout can't run
       // inside an iframe or behind an XHR redirect.
       window.location.href = checkoutUrl;
     } catch (err: any) {
