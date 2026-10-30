@@ -21,6 +21,7 @@ import { IngestionLogsPanel } from '../../components/IngestionLogsPanel';
 import { AiToolDiscoveryPanel } from '../../components/AiToolDiscoveryPanel';
 import { EarnStoryDiscoveryPanel } from '../../components/EarnStoryDiscoveryPanel';
 import { PremiumSubscribersPanel } from '../../components/PremiumSubscribersPanel';
+import { BenchmarksAdminPanel } from '../../components/BenchmarksAdminPanel';
 import { ShieldCheck, Layers, Clipboard, Radio, Calendar, Plus, ExternalLink, Sliders, CheckSquare, Sparkles, Loader2, BookOpen, Mail, GraduationCap, Trash2, PlayCircle, Search, Cpu } from 'lucide-react';
 import { DifficultyLevel, AiProvider, AiTask } from '../../types/api';
 
@@ -42,7 +43,7 @@ const primaryButtonClass =
 
 export const AdminPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'earn-story' | 'premium' | 'taxonomy' | 'tutorial' | 'video' | 'course' | 'ai-settings' | 'ingestion'>('queue');
+  const [activeTab, setActiveTab] = useState<'queue' | 'article' | 'tool' | 'earn-story' | 'premium' | 'taxonomy' | 'tutorial' | 'video' | 'course' | 'ai-settings' | 'ingestion' | 'benchmarks'>('queue');
   const [focusRunId, setFocusRunId] = useState<string | null>(null);
   const clearFocusRun = useCallback(() => setFocusRunId(null), []);
 
@@ -683,6 +684,20 @@ export const AdminPage: React.FC = () => {
           aria-selected={activeTab === 'earn-story'}
         >
           Make Money Stories
+        </button>
+        <button
+          onClick={() => setActiveTab('earn-story')}
+          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
+            activeTab === 'earn-story'
+              ? 'bg-stone-900 text-white shadow-sm'
+              : 'text-stone-500 hover:text-stone-950 hover:bg-stone-50'
+          }`}
+          id="admin-tab-benchmarks"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'earn-story'}
+        >
+          Benchmarks
         </button>
         <button
           onClick={() => setActiveTab('premium')}
@@ -1846,6 +1861,12 @@ export const AdminPage: React.FC = () => {
             )}
           </div>
         </section>
+      )}
+      {/* TAB 9: Benchmarks */}
+      {activeTab === 'benchmarks' && (
+        <div className="max-w-4xl mt-8">
+          <BenchmarksAdminPanel onNotify={showNotification} />
+        </div>
       )}
 
     </div>

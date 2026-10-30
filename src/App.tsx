@@ -56,6 +56,8 @@ const CreatePage = lazy(() => import('./pages/CreatePage').then((module) => ({ d
 const MyPagesPage = lazy(() => import('./pages/MyPagesPage').then((module) => ({ default: module.MyPagesPage })));
 const AdminPage = lazy(() => import('./pages/admin/AdminPage').then((module) => ({ default: module.AdminPage })));
 
+const BenchmarksPage = lazy(() => import('./pages/BenchmarksPage').then((module) => ({ default: module.BenchmarksPage })));
+
 // Instantiate the global TanStack Query Client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -197,6 +199,8 @@ export default function App() {
 
                 {/* Catch-all Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />
+
+                <Route path="/benchmarks" element={<BenchmarksPage />} />
               </Routes>
             </Suspense>
           </Layout>

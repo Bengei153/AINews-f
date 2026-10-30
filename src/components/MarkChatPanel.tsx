@@ -3,109 +3,241 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { sendMarkChatMessage, MarkChatTurn, MarkChatResponse } from '../api/createdPages';
-import { Sparkles, Send, Loader2, User } from 'lucide-react';
+import { ArrowUp, Loader2, Sparkles } from 'lucide-react';
+
+type PageSnapshot = MarkChatResponse['page'];
+
+/** A chat turn plus, for Mark's replies, the page fields that turn changed. */
+interface StudioMessage extends MarkChatTurn {
+  changes?: string[];
+}
 
 interface MarkChatPanelProps {
   /** Null until Mark's first reply creates the page server-side. */
   pageId: string | null;
+  /** The page as it stands now, so each reply can say which fields it changed. */
+  pageSnapshot: PageSnapshot | null;
   /** Called once the page exists (first message) and again after every turn, with the latest saved snapshot. */
-  onPageUpdated: (pageId: string, snapshot: MarkChatResponse['page']) => void;
+  onPageUpdated: (pageId: string, snapshot: PageSnapshot) => void;
+  /** Sent automatically, once, as the opening message (from the start screen). */
+  initialPrompt?: string;
+  /** Lets the parent clear the prompt from the URL state once it has been sent. */
+  onPromptConsumed?: () => void;
 }
 
 const GREETING =
-  "Hey, I'm Mark! Tell me what you built — what it does, and roughly how people should get to it (a download, a link, or your own API) — and I'll help you turn it into a page.";
+  "Hey, I'm Mark! Tell me what you built — what it does, and roughly how people should get to it (a download, a link, or your own API) — and I'll turn it into a page. You'll see it take shape on the right.";
 
-export const MarkChatPanel: React.FC<MarkChatPanelProps> = ({ pageId, onPageUpdated }) => {
-  const [messages, setMessages] = useState<MarkChatTurn[]>([{ role: 'assistant', content: GREETING }]);
+const STARTERS = [
+  'A web app I built that helps students…',
+  'A Python script that automates…',
+  'A Chrome extension that…',
+  'A free template pack for…',
+];
+
+const FIELD_LABELS: [keyof PageSnapshot, string][] = [
+  ['title', 'title'],
+  ['shortDescription', 'hook'],
+  ['detailedDescription', 'full story'],
+  ['category', 'category'],
+  ['toolsUsedText', 'tools'],
+  ['deliveryMode', 'delivery'],
+  ['deliveryUrl', 'link'],
+  ['coverImageUrl', 'cover image'],
+];
+
+const describeChanges = (before: PageSnapshot | null, after: PageSnapshot): string[] => {
+  if (!before) return ['Created your page draft'];
+  const changed = FIELD_LABELS.filter(([key]) => before[key] !== after[key]).map(([, label]) => label);
+  return changed.length ? [`Updated ${changed.join(', ')}`] : [];
+};
+
+// The chat isn't stored server-side (each request carries its own history), so it is kept for the
+// browser tab. That way a refresh doesn't wipe a conversation the builder is halfway through.
+const storageKey = (pageId: string | null) => `ai-brief:mark-chat:${pageId ?? 'new'}`;
+
+const loadMessages = (pageId: string | null): StudioMessage[] | null => {
+  try {
+    const raw = sessionStorage.getItem(storageKey(pageId));
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveMessages = (pageId: string | null, messages: StudioMessage[]) => {
+  try {
+    sessionStorage.setItem(storageKey(pageId), JSON.stringify(messages));
+    // Once the page exists the conversation lives under its id; a later brand-new chat starts clean.
+    if (pageId !== null) sessionStorage.removeItem(storageKey(null));
+  } catch {
+    /* storage unavailable or full — losing persistence is fine, the chat still works */
+  }
+};
+
+export const MarkChatPanel: React.FC<MarkChatPanelProps> = ({ pageId, pageSnapshot, onPageUpdated, initialPrompt, onPromptConsumed }) => {
+  const [messages, setMessages] = useState<StudioMessage[]>(() => loadMessages(pageId) ?? [{ role: 'assistant', content: GREETING }]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const autoSentRef = useRef(false);
+
+  useEffect(() => saveMessages(pageId, messages), [pageId, messages]);
+
+  // Scroll the message list itself — scrollIntoView would also scroll the whole page.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [messages, isSending]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
-    if (!text || isSending) return;
+  // Grow the box with the text, up to a limit, then scroll inside it.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 176)}px`;
+  }, [input]);
 
-    const nextMessages: MarkChatTurn[] = [...messages, { role: 'user', content: text }];
-    setMessages(nextMessages);
-    setInput('');
-    setError(null);
-    setIsSending(true);
+  const send = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || isSending) return;
 
-    try {
-      // History sent is everything BEFORE this turn — Mark receives the new message as a
-      // separate parameter, not duplicated inside history.
-      const result = await sendMarkChatMessage(pageId, messages, text);
-      setMessages((prev) => [...prev, { role: 'assistant', content: result.reply }]);
-      onPageUpdated(result.pageId, result.page);
-    } catch (err: any) {
-      setError(err?.detail || "Mark didn't respond — try again.");
-      // Roll back the optimistic user message's effect isn't needed (it's still shown), just stop the spinner.
-    } finally {
-      setIsSending(false);
+      const history: MarkChatTurn[] = messages.map(({ role, content }) => ({ role, content }));
+      const before = pageSnapshot;
+
+      setMessages((prev) => [...prev, { role: 'user', content: trimmed }]);
+      setInput('');
+      setError(null);
+      setIsSending(true);
+
+      try {
+        // History is everything BEFORE this turn — Mark receives the new message as its own parameter.
+        const result = await sendMarkChatMessage(pageId, history, trimmed);
+        setMessages((prev) => [...prev, { role: 'assistant', content: result.reply, changes: describeChanges(before, result.page) }]);
+        onPageUpdated(result.pageId, result.page);
+      } catch (err: any) {
+        setError(err?.detail || "Mark didn't respond — try again.");
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [isSending, messages, pageId, pageSnapshot, onPageUpdated]
+  );
+
+  // The start screen hands over what the builder typed there; send it as the first message.
+  useEffect(() => {
+    if (initialPrompt && !autoSentRef.current) {
+      autoSentRef.current = true;
+      onPromptConsumed?.();
+      void send(initialPrompt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter sends; Shift+Enter adds a line. Ignore Enter while an IME is composing a character.
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      void send(input);
     }
   };
 
+  const onlyGreeting = messages.length === 1;
+
   return (
-    <div className="flex flex-col h-[32rem] border border-stone-200 rounded-xl bg-white overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="studio-chat">
+      <div className="studio-chat__scroll" ref={scrollRef} role="log" aria-live="polite" aria-label="Conversation with Mark">
         {messages.map((m, i) => (
-          <div key={i} className={`flex gap-2.5 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                m.role === 'user' ? 'bg-stone-800' : 'bg-emerald-700'
-              }`}
-            >
-              {m.role === 'user' ? <User className="w-3.5 h-3.5 text-white" /> : <Sparkles className="w-3.5 h-3.5 text-white" />}
-            </div>
-            <div
-              className={`max-w-[80%] text-sm rounded-2xl px-3.5 py-2.5 whitespace-pre-wrap leading-relaxed ${
-                m.role === 'user' ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-800'
-              }`}
-            >
-              {m.content}
+          <div key={i} className={`studio-msg studio-msg--${m.role}`}>
+            {m.role === 'assistant' && (
+              <span className="studio-msg__avatar" aria-hidden="true">
+                <Sparkles className="w-3.5 h-3.5" />
+              </span>
+            )}
+            <div className="studio-msg__body">
+              {m.role === 'assistant' ? (
+                <div className="studio-md">
+                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                </div>
+              ) : (
+                <p>{m.content}</p>
+              )}
+              {m.changes && m.changes.length > 0 && (
+                <ul className="studio-msg__changes">
+                  {m.changes.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         ))}
+
         {isSending && (
-          <div className="flex gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-emerald-700 flex items-center justify-center shrink-0">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-            </div>
-            <div className="bg-stone-100 rounded-2xl px-3.5 py-2.5">
-              <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
+          <div className="studio-msg studio-msg--assistant" role="status">
+            <span className="studio-msg__avatar" aria-hidden="true">
+              <Sparkles className="w-3.5 h-3.5" />
+            </span>
+            <div className="studio-msg__body studio-msg__typing">
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Mark is writing…
             </div>
           </div>
         )}
-        <div ref={bottomRef} />
+
+        {onlyGreeting && !isSending && (
+          <div className="studio-chat__starters" aria-label="Ways to start">
+            {STARTERS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => {
+                  setInput(s);
+                  textareaRef.current?.focus();
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {error && <p className="text-xs text-red-600 px-4 pb-1">{error}</p>}
+      {error && (
+        <p className="studio-chat__error" role="alert">
+          {error}
+        </p>
+      )}
 
-      <form onSubmit={handleSend} className="border-t border-stone-100 p-3 flex gap-2">
-        <input
-          type="text"
+      <form
+        className="studio-chat__composer"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send(input);
+        }}
+      >
+        <textarea
+          ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Tell Mark about your project..."
-          className="flex-1 text-sm px-3.5 py-2.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-stone-50/50"
+          onKeyDown={handleKeyDown}
+          rows={1}
+          placeholder={pageId ? 'Ask Mark to change something…' : 'Describe what you built…'}
+          aria-label="Message to Mark"
           disabled={isSending}
         />
-        <button
-          type="submit"
-          disabled={isSending || !input.trim()}
-          className="bg-stone-900 hover:bg-stone-800 disabled:opacity-50 text-white p-2.5 rounded-lg transition-colors cursor-pointer"
-        >
-          <Send className="w-4 h-4" />
+        <button type="submit" className="studio-chat__send" disabled={isSending || !input.trim()} aria-label="Send">
+          {isSending ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="w-4 h-4" aria-hidden="true" />}
         </button>
       </form>
+      <p className="studio-chat__hint">Enter to send · Shift+Enter for a new line</p>
     </div>
   );
 };

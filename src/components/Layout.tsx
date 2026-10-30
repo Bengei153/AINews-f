@@ -59,6 +59,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { to: '/make-money', label: 'Make Money' },
     { to: '/projects', label: 'Projects', activePaths: ['/projects', '/create', '/my-pages'] },
     { to: '/showcase', label: 'Community' },
+    { to: '/benchmarks', label: 'Benchmarks' },
   ];
 
   const ThemeToggle = ({ compact = false }: { compact?: boolean }) => (
