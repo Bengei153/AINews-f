@@ -685,17 +685,17 @@ export const AdminPage: React.FC = () => {
         >
           Make Money Stories
         </button>
-        <button
-          onClick={() => setActiveTab('earn-story')}
+                <button
+          onClick={() => setActiveTab('benchmarks')}
           className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg whitespace-nowrap transition-colors ${
-            activeTab === 'earn-story'
+            activeTab === 'benchmarks'
               ? 'bg-stone-900 text-white shadow-sm'
               : 'text-stone-500 hover:text-stone-950 hover:bg-stone-50'
           }`}
           id="admin-tab-benchmarks"
           type="button"
           role="tab"
-          aria-selected={activeTab === 'earn-story'}
+          aria-selected={activeTab === 'benchmarks'}
         >
           Benchmarks
         </button>
