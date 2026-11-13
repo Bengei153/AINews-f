@@ -47,7 +47,7 @@ const IMPORT_TEMPLATE = `{
 export const BenchmarksAdminPanel: React.FC<BenchmarksAdminPanelProps> = ({ onNotify }) => {
   const queryClient = useQueryClient();
 
-  const { data: board, isLoading, isError } = useQuery({
+  const { data: board, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin-benchmark-board'],
     queryFn: getAdminBenchmarkBoard,
   });
@@ -66,7 +66,21 @@ export const BenchmarksAdminPanel: React.FC<BenchmarksAdminPanelProps> = ({ onNo
   }
 
   if (isError || !board) {
-    return <div className="bench-admin__empty">Couldn’t load the benchmark board.</div>;
+    // Say what actually went wrong — a bare "couldn't load" hides whether it's a missing
+    // endpoint (404), a database problem (500), a login problem (401/403) or no connection.
+    const status = (error as any)?.status;
+    return (
+      <section className="bench-admin__card" role="alert">
+        <h3 className="font-serif">Couldn’t load the benchmark board</h3>
+        <p className="bench-admin__hint">
+          {status ? `The server answered with status ${status}. ` : 'The request did not get an answer from the server. '}
+          {describeApiError(error, 'No further detail was returned.')}
+        </p>
+        <button type="button" className="btn-secondary btn-secondary--small" onClick={() => refetch()}>
+          Try again
+        </button>
+      </section>
+    );
   }
 
   return (
