@@ -9,12 +9,15 @@ import { useQuery } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import { getCreatedPageBySlug } from '../api/createdPages';
 import { getAiTools } from '../api/aiTools';
+import { VITE_API_BASE_URL } from '../api/client';
+import { BuiltPageFrame } from '../components/BuiltPageFrame';
 import { ArrowLeft, Download, Link2, Plug, ExternalLink, AlertCircle, Loader2, PlayCircle } from 'lucide-react';
 
 const DELIVERY_META: Record<string, { label: string; icon: React.ReactNode }> = {
   Download: { label: 'Download', icon: <Download className="w-4 h-4" /> },
   Link: { label: 'Open', icon: <Link2 className="w-4 h-4" /> },
   ConnectBackend: { label: 'Open', icon: <Plug className="w-4 h-4" /> },
+  BuiltPage: { label: 'Open', icon: <Link2 className="w-4 h-4" /> },
 };
 
 export const ProjectDetailPage: React.FC = () => {
@@ -78,17 +81,33 @@ export const ProjectDetailPage: React.FC = () => {
         <h1 className="font-serif text-3xl font-black text-stone-900 tracking-tight leading-tight">{page.title}</h1>
         <p className="text-sm text-stone-600">{page.shortDescription}</p>
 
-        <a
-          href={page.deliveryUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white font-bold py-3 px-6 rounded-xl text-sm shadow-md transition-colors"
-        >
-          {delivery.icon}
-          {delivery.label}
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+        {page.deliveryUrl.trim() && (
+          <a
+            href={page.deliveryUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white font-bold py-3 px-6 rounded-xl text-sm shadow-md transition-colors"
+          >
+            {delivery.icon}
+            {delivery.label}
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        )}
       </div>
+
+      {page.builtHtml && (
+        <section className="built-page" aria-label={`${page.title} — page built by Mark`}>
+          <BuiltPageFrame html={page.builtHtml} title={page.title} />
+          <a
+            className="built-page__open"
+            href={`${VITE_API_BASE_URL.replace(/\/$/, '')}/created-pages/${page.slug}/site`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open full screen <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </section>
+      )}
 
       {page.deliveryMode === 'ConnectBackend' && <TryItWidget url={page.deliveryUrl} />}
 

@@ -86,7 +86,7 @@ export const setFeaturedTool = async (toolId: string): Promise<void> => {
   await apiClient.post(`/ai-tools/${toolId}/feature`);
 };
 
-// --- Admin: automated discovery + review ------------------------------------
+// --- Admin: "Add more tools" + review of any drafts ------------------------
 
 export interface DraftAiTool {
   id: string;
@@ -110,12 +110,12 @@ export interface UpdateAiToolPayload {
   logoUrl: string | null; // null removes the image
 }
 
-export interface AiToolDiscoveryResult {
-  candidatesFound: number;
-  draftsCreated: number;
-  duplicates: number;
-  unreachable: number;
-  errors: string[];
+// One field tools are sorted into, with how many published tools it holds.
+// Empty fields are included: they are what "Add more tools" fills next.
+export interface AiToolCategory {
+  slug: string;
+  label: string;
+  count: number;
 }
 
 export const getAdminToolDrafts = async (): Promise<DraftAiTool[]> => {
@@ -127,22 +127,25 @@ export const getAdminToolDrafts = async (): Promise<DraftAiTool[]> => {
   return response.data;
 };
 
-// Topic-driven, like course discovery: the admin types what to look for and
-// Claude (web search, server-side) finds real tools and saves them as drafts.
-// Can take a minute or more, so the caller must show progress.
-export const discoverAiTools = async (topic: string): Promise<AiToolDiscoveryResult> => {
+export const getAiToolCategories = async (): Promise<AiToolCategory[]> => {
   if (isDemoMode()) {
     await simulateNetworkDelay();
-    return {
-      candidatesFound: 0,
-      draftsCreated: 0,
-      duplicates: 0,
-      unreachable: 0,
-      errors: ['Tool discovery is not simulated in demo mode.'],
-    };
+    return [];
   }
-  const response = await apiClient.post<AiToolDiscoveryResult>('/ai-tools/discover', { topic });
+  const response = await apiClient.get<AiToolCategory[]>('/ai-tools/categories');
   return response.data;
+};
+
+// "Add more tools" - the one button. The server removes duplicates, sorts uncategorized tools into
+// fields, searches the emptiest fields for new tools and adds them, all in the background. Resolves
+// with the run id straight away; follow it with getIngestionRun(runId). 400 while a run is in progress.
+export const addMoreAiTools = async (): Promise<string> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    throw { status: 400, title: 'Demo mode', detail: 'Adding tools needs the real backend.' };
+  }
+  const response = await apiClient.post<{ runId: string }>('/ai-tools/add-more');
+  return response.data.runId;
 };
 
 export const updateAiTool = async (toolId: string, payload: UpdateAiToolPayload): Promise<void> => {

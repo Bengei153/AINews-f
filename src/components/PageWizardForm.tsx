@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { OwnedCreatedPage, UpdatePagePayload, DeliveryMode } from '../api/createdPages';
 import { ImageUploadWidget } from './ImageUploadWidget';
-import { Loader2, Download, Link2, Plug } from 'lucide-react';
+import { Loader2, Download, Link2, Plug, Sparkles } from 'lucide-react';
 
 const fieldClass =
   'w-full text-sm px-3 py-2.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-stone-50/50';
@@ -15,6 +15,7 @@ const DELIVERY_OPTIONS: { value: DeliveryMode; label: string; hint: string; icon
   { value: 'Download', label: 'Download', hint: 'Link to where the download lives (GitHub Releases, Drive, etc.)', icon: <Download className="w-4 h-4" /> },
   { value: 'Link', label: 'Link', hint: 'A page or app people open directly', icon: <Link2 className="w-4 h-4" /> },
   { value: 'ConnectBackend', label: 'Connect', hint: 'Your own URL or API — visitors can try it live', icon: <Plug className="w-4 h-4" /> },
+  { value: 'BuiltPage', label: 'Built by Mark', hint: 'No site yet? Mark builds a web page and AI Brief hosts it', icon: <Sparkles className="w-4 h-4" /> },
 ];
 
 interface PageWizardFormProps {
@@ -105,7 +106,7 @@ export const PageWizardForm: React.FC<PageWizardFormProps> = ({ page, isSaving, 
 
       <div className="space-y-2">
         <label className="text-xs font-bold text-stone-600 block">How do people get to it? *</label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {DELIVERY_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -125,19 +126,27 @@ export const PageWizardForm: React.FC<PageWizardFormProps> = ({ page, isSaving, 
         </div>
       </div>
 
-      <div className="space-y-1">
-        <label className="text-xs font-bold text-stone-600 block">
-          {deliveryMode === 'ConnectBackend' ? 'Your URL or API endpoint *' : 'URL *'}
-        </label>
-        <input
-          type="url"
-          value={deliveryUrl}
-          onChange={(e) => setDeliveryUrl(e.target.value)}
-          className={fieldClass}
-          placeholder="https://..."
-          required
-        />
-      </div>
+      {deliveryMode === 'BuiltPage' ? (
+        <p className="text-xs text-stone-500 leading-relaxed">
+          {page.builtHtml
+            ? 'Visitors will see the page Mark built. Ask Mark in the chat to change it, or press Rebuild.'
+            : 'Tell Mark what the page should say and look like in the chat, then press Build with Mark. No link needed.'}
+        </p>
+      ) : (
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-stone-600 block">
+            {deliveryMode === 'ConnectBackend' ? 'Your URL or API endpoint *' : 'URL *'}
+          </label>
+          <input
+            type="url"
+            value={deliveryUrl}
+            onChange={(e) => setDeliveryUrl(e.target.value)}
+            className={fieldClass}
+            placeholder="https://..."
+            required
+          />
+        </div>
+      )}
 
       <div className="space-y-1">
         <label className="text-xs font-bold text-stone-600 block">Cover image</label>

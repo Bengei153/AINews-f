@@ -28,7 +28,11 @@ export const getCreatedPageBySlug = async (slug: string): Promise<CreatedPageDet
 
 // --- Owner dashboard + wizard ----------------------------------------------
 
-export type DeliveryMode = 'Download' | 'Link' | 'ConnectBackend';
+// BuiltPage = Mark built a web page for this project and AI Brief hosts it (no outside link needed).
+export type DeliveryMode = 'Download' | 'Link' | 'ConnectBackend' | 'BuiltPage';
+
+// Where Mark's page build is up to. 'None' = never built.
+export type PageBuildStatus = 'None' | 'Building' | 'Ready' | 'Failed';
 
 export interface MyCreatedPage {
   id: string;
@@ -54,6 +58,11 @@ export interface OwnedCreatedPage {
   deliveryUrl: string;
   coverImageUrl: string | null;
   viewCount: number;
+  buildStatus: PageBuildStatus;
+  buildError: string | null;
+  /** The page Mark built. Untrusted AI-written code: only ever show it inside <BuiltPageFrame>. */
+  builtHtml: string | null;
+  builtAt: string | null;
 }
 
 export interface UpdatePagePayload {
@@ -138,7 +147,11 @@ export interface MarkChatResponse {
     deliveryMode: DeliveryMode;
     deliveryUrl: string;
     coverImageUrl: string | null;
+    buildStatus: PageBuildStatus;
+    hasBuiltPage: boolean;
   };
+  /** Set when Mark just started building the page this turn. */
+  buildInstruction?: string | null;
 }
 
 // pageId null starts a brand-new page on the first message.
@@ -157,4 +170,16 @@ export const sendMarkChatMessage = async (
     message,
   });
   return response.data;
+};
+
+// --- Mark builds the page -----------------------------------------------------
+
+// The "Build with Mark" / "Rebuild" button. Returns at once; the build runs in the background, so poll
+// getCreatedPageForEdit until buildStatus leaves 'Building'. `instruction` is what to build or change.
+export const buildCreatedPage = async (pageId: string, instruction?: string): Promise<void> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    throw new Error('Building pages is not simulated in demo mode.');
+  }
+  await apiClient.post(`/created-pages/${pageId}/build`, { instruction: instruction?.trim() || null });
 };

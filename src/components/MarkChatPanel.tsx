@@ -29,13 +29,14 @@ interface MarkChatPanelProps {
 }
 
 const GREETING =
-  "Hey, I'm Mark! Tell me what you built — what it does, and roughly how people should get to it (a download, a link, or your own API) — and I'll turn it into a page. You'll see it take shape on the right.";
+  "Hey, I'm Mark! Tell me what you built — what it does, and roughly how people should get to it (a download, a link, or your own API). No website yet? I can build a real web page for it, right here. You'll see it take shape on the right.";
 
 const STARTERS = [
   'A web app I built that helps students…',
   'A Python script that automates…',
   'A Chrome extension that…',
   'A free template pack for…',
+  "I don't have a website yet — build me a page for…",
 ];
 
 const FIELD_LABELS: [keyof PageSnapshot, string][] = [
@@ -50,9 +51,10 @@ const FIELD_LABELS: [keyof PageSnapshot, string][] = [
 ];
 
 const describeChanges = (before: PageSnapshot | null, after: PageSnapshot): string[] => {
-  if (!before) return ['Created your page draft'];
+  const started = after.buildStatus === 'Building' && before?.buildStatus !== 'Building' ? ['Started building your page'] : [];
+  if (!before) return ['Created your page draft', ...started];
   const changed = FIELD_LABELS.filter(([key]) => before[key] !== after[key]).map(([, label]) => label);
-  return changed.length ? [`Updated ${changed.join(', ')}`] : [];
+  return [...(changed.length ? [`Updated ${changed.join(', ')}`] : []), ...started];
 };
 
 // The chat isn't stored server-side (each request carries its own history), so it is kept for the

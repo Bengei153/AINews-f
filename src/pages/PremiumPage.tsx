@@ -8,6 +8,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle2, XCircle, Clock, Sparkles } from 'lucide-react';
 import { usePremiumStatus } from '../hooks/usePremiumStatus';
 import { PremiumUpsell } from '../components/PremiumUpsell';
+import { PromoRedeemBox } from '../components/PromoRedeemBox';
 import { useAuth } from '../store/authStore';
 
 // Doubles as the pricing page (no ?status=) and the landing page the payment provider
@@ -106,6 +107,8 @@ export const PremiumPage: React.FC = () => {
       ) : (
         <PremiumUpsell context="build a project page" />
       )}
+
+      {isAuthenticated && <PromoRedeemBox />}
     </div>
   );
 };

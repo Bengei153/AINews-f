@@ -3,19 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getAdminToolDrafts,
-  discoverAiTools,
+  getAiToolCategories,
+  addMoreAiTools,
   updateAiTool,
   publishAiTool,
   deleteAiTool,
   DraftAiTool,
   UpdateAiToolPayload,
 } from '../api/aiTools';
+import { getIngestionRun, getIngestionRuns, IngestionRunStatus } from '../api/ingestion';
 import { ImageUploadWidget } from './ImageUploadWidget';
-import { Search, Sparkles, Loader2, CheckSquare, Trash2, Pencil, ExternalLink, Star } from 'lucide-react';
+import { Sparkles, Loader2, CheckSquare, Trash2, Pencil, ExternalLink, Star, Plus } from 'lucide-react';
+import '../styles/mark-promos.css';
 
 const fieldClass =
   'w-full text-sm px-3 py-2.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-stone-50/50';
@@ -27,35 +30,71 @@ interface AiToolDiscoveryPanelProps {
   onNotify: (type: 'success' | 'error', message: string) => void;
 }
 
-// Self-contained (own queries, mutations, local edit state) so it drops into
-// the admin Tools tab without threading its state through AdminPage, the
-// same way IngestionLogsPanel is used elsewhere in this file.
+const isActive = (status: IngestionRunStatus | undefined) => status === 'Queued' || status === 'Running';
+
+// The whole "grow the directory" workflow is one button. Everything else (finding tools, sorting them
+// into fields, dropping duplicates, checking links, publishing) happens on the server, and this panel
+// just follows the run live. It is self-contained (own queries, mutations and state) so it drops into
+// the admin Tools tab without threading state through AdminPage.
 export const AiToolDiscoveryPanel: React.FC<AiToolDiscoveryPanelProps> = ({ onNotify }) => {
   const queryClient = useQueryClient();
-  const [topic, setTopic] = useState('');
-  const [lastRunErrors, setLastRunErrors] = useState<string[]>([]);
+  const [runId, setRunId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const announcedRunRef = useRef<string | null>(null);
 
   const { data: drafts, isLoading } = useQuery({
     queryKey: ['admin-tool-drafts'],
     queryFn: getAdminToolDrafts,
   });
 
-  const discoverMutation = useMutation({
-    mutationFn: () => discoverAiTools(topic.trim()),
-    onSuccess: (result) => {
-      setLastRunErrors(result.errors);
-      queryClient.invalidateQueries({ queryKey: ['admin-tool-drafts'] });
-      if (result.draftsCreated > 0) {
-        onNotify('success', `Found ${result.draftsCreated} new tool${result.draftsCreated === 1 ? '' : 's'} — review them below.`);
-        setTopic('');
-      } else if (result.errors.length === 0) {
-        onNotify('error', 'No new tools found for that topic — everything found was already listed.');
-      } else {
-        onNotify('error', 'The search finished but found nothing usable. See details below.');
-      }
+  const { data: categories } = useQuery({
+    queryKey: ['ai-tool-categories'],
+    queryFn: getAiToolCategories,
+  });
+
+  // If a run is already going (page reloaded, or the weekly job is running), pick it up.
+  const { data: latestRuns } = useQuery({
+    queryKey: ['ai-tool-latest-run'],
+    queryFn: () => getIngestionRuns('AIToolDiscovery', 1),
+  });
+
+  useEffect(() => {
+    const latest = latestRuns?.[0];
+    if (!runId && latest && isActive(latest.status) && !latest.isStale) {
+      announcedRunRef.current = null;
+      setRunId(latest.id);
+    }
+  }, [latestRuns, runId]);
+
+  const { data: runDetail } = useQuery({
+    queryKey: ['ai-tool-run', runId],
+    queryFn: () => getIngestionRun(runId as string),
+    enabled: !!runId,
+    refetchInterval: (query) => (isActive(query.state.data?.run.status) ? 2500 : false),
+  });
+
+  const run = runDetail?.run;
+  const running = !!runId && (!run || isActive(run.status));
+
+  // When a run we were watching finishes, refresh what it changed and say how it went — once.
+  useEffect(() => {
+    if (!run || isActive(run.status) || announcedRunRef.current === run.id) return;
+    announcedRunRef.current = run.id;
+    queryClient.invalidateQueries({ queryKey: ['ai-tools'] });
+    queryClient.invalidateQueries({ queryKey: ['ai-tool-categories'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-tool-drafts'] });
+    queryClient.invalidateQueries({ queryKey: ['ai-tool-latest-run'] });
+    onNotify(run.status === 'Failed' || run.status === 'Abandoned' ? 'error' : 'success', run.summary || 'Finished.');
+  }, [run, queryClient, onNotify]);
+
+  const addMoreMutation = useMutation({
+    mutationFn: addMoreAiTools,
+    onSuccess: (id) => {
+      announcedRunRef.current = null;
+      setRunId(id);
+      queryClient.removeQueries({ queryKey: ['ai-tool-run', id] });
     },
-    onError: (err: any) => onNotify('error', err?.detail || 'Tool search failed — try again.'),
+    onError: (err: any) => onNotify('error', err?.detail || 'Could not start. Try again in a moment.'),
   });
 
   const updateMutation = useMutation({
@@ -73,6 +112,7 @@ export const AiToolDiscoveryPanel: React.FC<AiToolDiscoveryPanelProps> = ({ onNo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-tool-drafts'] });
       queryClient.invalidateQueries({ queryKey: ['ai-tools'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-tool-categories'] });
       onNotify('success', 'Tool published to the directory.');
     },
     onError: (err: any) => onNotify('error', err?.detail || 'Could not publish this tool.'),
@@ -87,93 +127,99 @@ export const AiToolDiscoveryPanel: React.FC<AiToolDiscoveryPanelProps> = ({ onNo
     onError: (err: any) => onNotify('error', err?.detail || 'Could not remove this draft.'),
   });
 
-  const handleDiscover = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!topic.trim()) return;
-    setLastRunErrors([]);
-    discoverMutation.mutate();
-  };
-
   const handleDelete = (id: string, name: string) => {
     if (window.confirm(`Discard the draft for "${name}"? This can't be undone.`)) {
       deleteMutation.mutate(id);
     }
   };
 
+  const recentEntries = (runDetail?.entries ?? []).slice(-8);
+  const totalTools = (categories ?? []).reduce((sum, c) => sum + c.count, 0);
+
   return (
     <div className="space-y-8">
       <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-4">
         <div className="border-b border-stone-100 pb-3">
           <h2 className="font-serif text-xl font-bold text-stone-800 flex items-center gap-1.5">
-            <Search className="w-5 h-5 text-emerald-800" />
-            Find AI Tools
+            <Sparkles className="w-5 h-5 text-emerald-800" />
+            Grow the Tools Directory
           </h2>
           <p className="text-xs text-stone-500 mt-1">
-            Type a topic — Claude searches the web for real, currently available tools on it. New ones land below as
-            drafts; nothing goes live until you review and publish it.
+            One button. The site finds new tools on its own, sorts them into their fields, skips anything already
+            listed, checks every link and publishes the rest. It also runs by itself on a schedule.
           </p>
         </div>
 
-        <form onSubmit={handleDiscover} className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              placeholder="e.g. AI tools for video editing"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className={fieldClass}
-              style={{ paddingLeft: '2.25rem' }}
-            />
-            <Search className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
-          </div>
+        <div className="tools-admin__run">
           <button
-            type="submit"
-            disabled={discoverMutation.isPending || !topic.trim()}
+            type="button"
+            onClick={() => addMoreMutation.mutate()}
+            disabled={running || addMoreMutation.isPending}
             className={`${primaryButtonClass} whitespace-nowrap`}
           >
-            {discoverMutation.isPending ? (
+            {running || addMoreMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Searching...</span>
+                <span>Adding tools...</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
-                <span>Find tools</span>
+                <Plus className="w-4 h-4" />
+                <span>Add more tools</span>
               </>
             )}
           </button>
-        </form>
+          <p className="tools-admin__run-note">
+            {running
+              ? 'Working in the background. You can leave this page, and it keeps going.'
+              : run
+                ? run.summary || 'Finished.'
+                : totalTools > 0
+                  ? `${totalTools} tools published so far.`
+                  : 'Press to add the first batch.'}
+          </p>
+        </div>
 
-        {lastRunErrors.length > 0 && (
-          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-1">
-            {lastRunErrors.map((err, i) => (
-              <p key={i}>{err}</p>
+        {runId && recentEntries.length > 0 && (
+          <ul className="tools-admin__log" aria-live="polite">
+            {recentEntries.map((entry) => (
+              <li key={entry.sequence} className={`tools-admin__log-line tools-admin__log-line--${entry.level.toLowerCase()}`}>
+                {entry.message}
+              </li>
             ))}
+          </ul>
+        )}
+
+        {categories && categories.length > 0 && (
+          <div className="tools-admin__fields">
+            <p className="tools-admin__fields-title">Tools per field (emptiest fields are filled first)</p>
+            <ul className="tools-admin__field-list">
+              {categories.map((c) => (
+                <li key={c.slug} className={`tools-admin__field${c.count === 0 ? ' tools-admin__field--empty' : ''}`}>
+                  <span>{c.label}</span>
+                  <strong>{c.count}</strong>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400">
-          <CheckSquare className="w-4 h-4" />
-          Tool Review Queue
-        </div>
+      {(isLoading || (drafts && drafts.length > 0)) && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400">
+            <CheckSquare className="w-4 h-4" />
+            Tools waiting for review
+          </div>
 
-        {isLoading ? (
-          <div className="flex flex-col items-center py-12 gap-3 text-stone-400">
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <p className="text-xs">Loading queue items...</p>
-          </div>
-        ) : !drafts || drafts.length === 0 ? (
-          <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center max-w-md mx-auto space-y-3">
-            <CheckSquare className="w-12 h-12 text-emerald-500 mx-auto" />
-            <h3 className="font-serif text-lg font-bold text-stone-800">No tool drafts waiting</h3>
-            <p className="text-sm text-stone-500">Search for a topic above to find some.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {drafts.map((draft) =>
+          {isLoading ? (
+            <div className="flex flex-col items-center py-12 gap-3 text-stone-400">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <p className="text-xs">Loading queue items...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {(drafts ?? []).map((draft) =>
               editingId === draft.id ? (
                 <DraftEditForm
                   key={draft.id}
@@ -249,10 +295,11 @@ export const AiToolDiscoveryPanel: React.FC<AiToolDiscoveryPanelProps> = ({ onNo
                   </div>
                 </div>
               )
-            )}
-          </div>
-        )}
-      </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

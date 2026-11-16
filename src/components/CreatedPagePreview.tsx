@@ -5,8 +5,9 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { DeliveryMode } from '../api/createdPages';
-import { Download, ExternalLink, Link2, Plug, Sparkles } from 'lucide-react';
+import { DeliveryMode, PageBuildStatus } from '../api/createdPages';
+import { BuiltPageFrame } from './BuiltPageFrame';
+import { AlertCircle, Download, ExternalLink, Link2, Loader2, Plug, Sparkles } from 'lucide-react';
 
 export interface PreviewablePage {
   title: string;
@@ -18,12 +19,17 @@ export interface PreviewablePage {
   deliveryUrl: string;
   coverImageUrl: string | null;
   slug?: string;
+  /** Set once Mark has built a page: the preview then shows that page itself. */
+  builtHtml?: string | null;
+  buildStatus?: PageBuildStatus;
+  buildError?: string | null;
 }
 
 const DELIVERY: Record<DeliveryMode, { label: string; icon: React.ReactNode }> = {
   Download: { label: 'Download', icon: <Download className="w-4 h-4" aria-hidden="true" /> },
   Link: { label: 'Open', icon: <Link2 className="w-4 h-4" aria-hidden="true" /> },
   ConnectBackend: { label: 'Open', icon: <Plug className="w-4 h-4" aria-hidden="true" /> },
+  BuiltPage: { label: 'Open page', icon: <Link2 className="w-4 h-4" aria-hidden="true" /> },
 };
 
 interface CreatedPagePreviewProps {
@@ -45,6 +51,8 @@ export const CreatedPagePreview: React.FC<CreatedPagePreviewProps> = ({ page, de
   const delivery = DELIVERY[page?.deliveryMode ?? 'Link'] ?? DELIVERY.Link;
   const hasLink = !!page?.deliveryUrl.trim();
   const address = `ai-brief.space/projects/${page?.slug || 'your-project'}`;
+  const isBuilding = page?.buildStatus === 'Building';
+  const buildFailed = page?.buildStatus === 'Failed';
 
   return (
     <div className={`studio-browser studio-browser--${device}`}>
@@ -53,7 +61,31 @@ export const CreatedPagePreview: React.FC<CreatedPagePreviewProps> = ({ page, de
         <div className="studio-browser__address">{address}</div>
       </div>
 
-      {!page || (!page.title && !page.shortDescription && !page.detailedDescription) ? (
+      {buildFailed && (
+        <div className="studio-built__alert" role="alert">
+          <AlertCircle className="w-4 h-4" aria-hidden="true" />
+          <span>{page?.buildError || 'The build did not finish.'} Press Rebuild to try again.</span>
+        </div>
+      )}
+
+      {page?.builtHtml ? (
+        // Mark built this page, so the preview IS the page (the project-page miniature below is only for pages without one).
+        <div className="studio-built">
+          <BuiltPageFrame html={page.builtHtml} title={page.title} className="studio-built__frame" />
+          {isBuilding && (
+            <div className="studio-built__overlay" role="status">
+              <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+              Mark is updating your page…
+            </div>
+          )}
+        </div>
+      ) : isBuilding ? (
+        <div className="studio-preview__empty" role="status">
+          <Loader2 className="w-8 h-8 animate-spin" aria-hidden="true" />
+          <h3 className="font-serif">Mark is building your page</h3>
+          <p>This usually takes a minute or two. It will appear here by itself — you can keep chatting meanwhile.</p>
+        </div>
+      ) : !page || (!page.title && !page.shortDescription && !page.detailedDescription) ? (
         <div className="studio-preview__empty">
           <Sparkles className="w-8 h-8" aria-hidden="true" />
           <h3 className="font-serif">Your page appears here</h3>

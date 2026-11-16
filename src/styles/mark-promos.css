@@ -1,0 +1,98 @@
+/* Mark page building, Promos, and the "Add more tools" panel.
+   Uses the same design tokens as studio.css / benchmarks.css, so light and dark themes follow automatically. */
+
+/* --- Pages built by Mark: the sandboxed frame ------------------------------ */
+.built-frame { display: block; width: 100%; height: 70vh; min-height: 28rem; border: 0; background: #fff; }
+.built-page { display: flex; flex-direction: column; gap: .6rem; }
+.built-page .built-frame { border: 1px solid var(--line-soft); border-radius: 1rem; box-shadow: var(--shadow-editorial); }
+.built-page__open { align-self: flex-end; display: inline-flex; align-items: center; gap: .35rem; color: var(--brand-green); font-size: .74rem; font-weight: 800; }
+.built-page__open:hover { text-decoration: underline; }
+
+/* Inside the studio preview (the browser frame supplies the rounded border) */
+.studio-built { position: relative; }
+.studio-built__frame { display: block; width: 100%; height: 68vh; min-height: 26rem; border: 0; background: #fff; }
+.studio-built__overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .6rem; background: color-mix(in srgb, var(--surface-card) 82%, transparent); color: var(--ink-strong); font-size: .86rem; font-weight: 800; backdrop-filter: blur(2px); }
+.studio-built__alert { display: flex; align-items: flex-start; gap: .5rem; padding: .7rem .9rem; border-bottom: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; font-size: .78rem; font-weight: 700; line-height: 1.5; }
+:root[data-theme='dark'] .studio-built__alert { border-color: #7f1d1d; background: #2a1215; color: #fca5a5; }
+
+/* --- "Add more tools" panel (admin) --------------------------------------- */
+.tools-admin__run { display: flex; align-items: center; flex-wrap: wrap; gap: .9rem; }
+.tools-admin__run-note { margin: 0; color: var(--ink-muted); font-size: .8rem; font-weight: 600; line-height: 1.5; }
+.tools-admin__log { margin: 0; padding: .75rem .9rem; display: flex; flex-direction: column; gap: .3rem; list-style: none; border: 1px solid var(--line-soft); border-radius: .75rem; background: var(--surface-soft); max-height: 11rem; overflow-y: auto; }
+.tools-admin__log-line { color: var(--ink-body); font-size: .74rem; font-weight: 600; line-height: 1.45; }
+.tools-admin__log-line--warning { color: #b45309; }
+.tools-admin__log-line--error { color: #b91c1c; font-weight: 700; }
+:root[data-theme='dark'] .tools-admin__log-line--warning { color: #fbbf24; }
+:root[data-theme='dark'] .tools-admin__log-line--error { color: #fca5a5; }
+.tools-admin__fields-title { margin: 0 0 .5rem; color: var(--ink-muted); font-size: .66rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.tools-admin__field-list { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.tools-admin__field { display: inline-flex; align-items: center; gap: .5rem; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface-soft); color: var(--ink-body); padding: .25rem .7rem; font-size: .74rem; font-weight: 700; }
+.tools-admin__field strong { color: var(--ink-strong); font-weight: 900; }
+.tools-admin__field--empty { border-style: dashed; color: var(--ink-muted); }
+
+/* --- Redeem a promo code (Premium page) ------------------------------------ */
+.promo-redeem { display: flex; flex-direction: column; gap: .55rem; padding: 1.1rem 1.25rem; border: 1px solid var(--line-soft); border-radius: 1rem; background: var(--surface-card); }
+.promo-redeem--collapsed { align-items: center; padding: .4rem; border: 0; background: transparent; }
+.promo-redeem__toggle { display: inline-flex; align-items: center; gap: .4rem; border: 0; background: none; color: var(--brand-green); font-size: .82rem; font-weight: 800; cursor: pointer; }
+.promo-redeem__toggle:hover { text-decoration: underline; }
+.promo-redeem__label { color: var(--ink-strong); font-size: .78rem; font-weight: 800; }
+.promo-redeem__row { display: flex; gap: .5rem; }
+.promo-redeem__input { flex: 1; min-width: 0; border: 1px solid var(--line-strong); border-radius: .7rem; background: var(--surface-page); color: var(--ink-strong); padding: .6rem .8rem; font: inherit; font-size: .9rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.promo-redeem__input:focus { outline: 0; border-color: var(--brand-green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-green) 14%, transparent); }
+.promo-redeem__submit { border: 0; border-radius: .7rem; background: var(--ink-strong); color: var(--surface-card); padding: .6rem 1.1rem; font-size: .8rem; font-weight: 800; cursor: pointer; }
+.promo-redeem__submit:disabled { opacity: .55; cursor: default; }
+.promo-redeem__message { display: flex; align-items: center; gap: .4rem; margin: 0; font-size: .8rem; font-weight: 700; }
+.promo-redeem__message--ok { color: var(--brand-green); }
+.promo-redeem__message--error { color: #b91c1c; }
+:root[data-theme='dark'] .promo-redeem__message--error { color: #fca5a5; }
+
+/* --- Promos (admin) --------------------------------------------------------- */
+.promo-admin { display: flex; flex-direction: column; gap: 1.5rem; }
+.promo-admin__card { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; border: 1px solid var(--line-soft); border-radius: 1rem; background: var(--surface-card); }
+.promo-admin__title { display: flex; align-items: center; gap: .5rem; margin: 0; color: var(--ink-strong); font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; font-weight: 800; }
+.promo-admin__sub { margin: .3rem 0 0; color: var(--ink-muted); font-size: .8rem; font-weight: 600; line-height: 1.55; }
+.promo-admin__form { display: flex; flex-direction: column; gap: 1rem; }
+.promo-admin__actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.promo-admin__primary, .promo-admin__secondary { display: inline-flex; align-items: center; gap: .4rem; border-radius: .7rem; padding: .6rem 1.1rem; font-size: .8rem; font-weight: 800; cursor: pointer; }
+.promo-admin__primary { border: 0; background: var(--ink-strong); color: var(--surface-card); }
+.promo-admin__secondary { border: 1px solid var(--line-strong); background: transparent; color: var(--ink-body); }
+.promo-admin__primary:disabled { opacity: .55; cursor: default; }
+.promo-admin__list { display: flex; flex-direction: column; gap: .9rem; }
+.promo-admin__empty { display: flex; justify-content: center; padding: 2rem; border: 1px dashed var(--line-strong); border-radius: 1rem; color: var(--ink-muted); font-size: .84rem; font-weight: 600; }
+
+.promo-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+.promo-fields__item { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.promo-fields__item--wide { grid-column: 1 / -1; }
+.promo-fields__item span { color: var(--ink-muted); font-size: .68rem; font-weight: 800; }
+.promo-fields__item input { width: 100%; border: 1px solid var(--line-strong); border-radius: .6rem; background: var(--surface-page); color: var(--ink-strong); padding: .55rem .7rem; font: inherit; font-size: .85rem; font-weight: 600; }
+.promo-fields__item input:focus { outline: 0; border-color: var(--brand-green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-green) 14%, transparent); }
+
+.promo-card { display: flex; flex-direction: column; gap: .7rem; padding: 1.15rem 1.25rem; border: 1px solid var(--line-soft); border-radius: 1rem; background: var(--surface-card); }
+.promo-card--editing { border-color: var(--brand-green); }
+.promo-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.promo-card__name { margin: .35rem 0 0; color: var(--ink-strong); font-size: 1.02rem; font-weight: 800; }
+.promo-card__state { display: inline-block; border-radius: .35rem; padding: .12rem .5rem; font-size: .58rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; background: var(--surface-band); color: var(--ink-muted); }
+.promo-card__state--live { background: var(--brand-green-soft); color: var(--brand-green); }
+.promo-card__state--scheduled { background: #eff6ff; color: #1d4ed8; }
+.promo-card__state--full, .promo-card__state--paused { background: #fffbeb; color: #b45309; }
+.promo-card__state--expired { background: var(--surface-band); color: var(--ink-muted); }
+.promo-card__code { display: inline-flex; align-items: center; gap: .5rem; border: 1px dashed var(--line-strong); border-radius: .6rem; background: var(--surface-soft); color: var(--ink-strong); padding: .4rem .7rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem; font-weight: 800; letter-spacing: .05em; cursor: pointer; }
+.promo-card__code:hover { border-color: var(--brand-green); }
+.promo-card__desc, .promo-card__facts { margin: 0; color: var(--ink-muted); font-size: .78rem; font-weight: 600; line-height: 1.5; }
+.promo-card__seats { display: flex; align-items: center; gap: .7rem; }
+.promo-card__bar { flex: 1; height: .45rem; overflow: hidden; border-radius: 999px; background: var(--surface-band); }
+.promo-card__bar span { display: block; height: 100%; border-radius: 999px; background: var(--brand-green); }
+.promo-card__seat-text { color: var(--ink-body); font-size: .74rem; font-weight: 700; white-space: nowrap; }
+.promo-card__actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+.promo-card__actions button { display: inline-flex; align-items: center; gap: .3rem; border: 1px solid var(--line-strong); border-radius: .6rem; background: transparent; color: var(--ink-body); padding: .38rem .7rem; font-size: .72rem; font-weight: 800; cursor: pointer; }
+.promo-card__actions button:hover:not(:disabled) { border-color: var(--brand-green); color: var(--brand-green); }
+.promo-card__actions .promo-card__danger { color: #b91c1c; border-color: #fecaca; }
+.promo-card__redeemers { display: flex; flex-direction: column; gap: .3rem; margin: 0; padding: .7rem .9rem; list-style: none; border-radius: .7rem; background: var(--surface-soft); max-height: 14rem; overflow-y: auto; }
+.promo-card__redeemers li { display: flex; justify-content: space-between; gap: 1rem; color: var(--ink-body); font-size: .74rem; font-weight: 600; }
+.promo-card__redeemers time { color: var(--ink-muted); white-space: nowrap; }
+.promo-card__redeemers-note { margin: 0; color: var(--ink-muted); font-size: .76rem; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .promo-fields { grid-template-columns: 1fr; }
+  .promo-redeem__row { flex-direction: column; }
+}

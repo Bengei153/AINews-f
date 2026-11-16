@@ -13,19 +13,13 @@ import { ToolCard } from '../components/ToolCard';
 import { TutorialCard } from '../components/TutorialCard';
 import { AlertCircle, ArrowRight, Award, GraduationCap, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 
-const GOAL_FILTERS = [
-  { label: 'Explore all', facet: '' },
-  { label: 'Write & brainstorm', facet: 'Generative AI' },
-  { label: 'Study & research', facet: 'Research' },
-  { label: 'Create visuals', facet: 'Creative' },
-  { label: 'Work with data', facet: 'Analysis' },
-  { label: 'Build & automate', facet: 'DevOps' },
-];
+// Chips come from the fields the tools are actually sorted into (the server categorizes every tool),
+// so a new field with tools in it appears here by itself.
+const OTHER = 'other';
 
 export const ToolsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFacet, setActiveFacet] = useState('');
-  const activeGoalLabel = GOAL_FILTERS.find((goal) => goal.facet === activeFacet)?.label ?? 'your search';
+  const [activeCategory, setActiveCategory] = useState('');
 
   const { data: tools, isLoading, isError: toolsError, refetch: retryTools } = useQuery({
     queryKey: ['ai-tools'],
@@ -37,20 +31,33 @@ export const ToolsPage: React.FC = () => {
     queryFn: () => getTutorials({ pageNumber: 1, pageSize: 3 }),
   });
 
+  const categoryChips = React.useMemo(() => {
+    const chips = new Map<string, { slug: string; label: string; count: number }>();
+    (tools ?? []).forEach((tool) => {
+      const slug = tool.category || OTHER;
+      const existing = chips.get(slug);
+      if (existing) existing.count += 1;
+      else chips.set(slug, { slug, label: tool.categoryLabel || 'Other', count: 1 });
+    });
+    // Biggest fields first; the catch-all "Other" always last.
+    return [...chips.values()].sort((a, b) => (a.slug === OTHER ? 1 : b.slug === OTHER ? -1 : b.count - a.count));
+  }, [tools]);
+
+  const activeGoalLabel = categoryChips.find((chip) => chip.slug === activeCategory)?.label ?? 'your search';
+
   const filteredTools = React.useMemo(() => {
     if (!tools) return [];
     const q = searchQuery.toLowerCase().trim();
-    const facet = activeFacet.toLowerCase();
 
     return tools.filter((tool) => {
       const name = tool.name.toLowerCase();
       const desc = tool.description.toLowerCase();
       const tags = tool.tags.toLowerCase();
       const matchesSearch = !q || name.includes(q) || desc.includes(q) || tags.includes(q);
-      const matchesFacet = !facet || name.includes(facet) || desc.includes(facet) || tags.includes(facet);
-      return matchesSearch && matchesFacet;
+      const matchesCategory = !activeCategory || (tool.category || OTHER) === activeCategory;
+      return matchesSearch && matchesCategory;
     });
-  }, [tools, searchQuery, activeFacet]);
+  }, [tools, searchQuery, activeCategory]);
 
   const { featuredTool, standardTools } = React.useMemo(() => {
     if (!filteredTools) return { featuredTool: undefined, standardTools: [] };
@@ -115,15 +122,23 @@ export const ToolsPage: React.FC = () => {
           />
         </div>
         <div className="facet-row" role="group" aria-label="What do you want help with?">
-          {GOAL_FILTERS.map(({ label, facet }) => (
+          <button
+            type="button"
+            onClick={() => setActiveCategory('')}
+            aria-pressed={activeCategory === ''}
+            className={activeCategory === '' ? 'facet-chip facet-chip--active' : 'facet-chip'}
+          >
+            Explore all
+          </button>
+          {categoryChips.map(({ slug, label, count }) => (
             <button
-              key={label}
+              key={slug}
               type="button"
-              onClick={() => setActiveFacet(facet)}
-              aria-pressed={activeFacet === facet}
-              className={activeFacet === facet ? 'facet-chip facet-chip--active' : 'facet-chip'}
+              onClick={() => setActiveCategory(slug)}
+              aria-pressed={activeCategory === slug}
+              className={activeCategory === slug ? 'facet-chip facet-chip--active' : 'facet-chip'}
             >
-              {label}
+              {label} · {count}
             </button>
           ))}
         </div>
@@ -152,7 +167,7 @@ export const ToolsPage: React.FC = () => {
             type="button"
             onClick={() => {
               setSearchQuery('');
-              setActiveFacet('');
+              setActiveCategory('');
             }}
             className="btn-secondary"
           >
@@ -234,9 +249,9 @@ export const ToolsPage: React.FC = () => {
 
       <section className="metric-band">
         <div>
-          <span>Editorial Trust</span>
+          <span>Link Checked</span>
           <strong>100%</strong>
-          <p>Every tool undergoes a testing cycle before listing.</p>
+          <p>Every tool's website is checked before it is listed.</p>
         </div>
         <div>
           <span>Global Reach</span>

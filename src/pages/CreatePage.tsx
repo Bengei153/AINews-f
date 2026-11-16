@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -11,6 +11,7 @@ import {
   getCreatedPageForEdit,
   updateCreatedPage,
   publishCreatedPage,
+  buildCreatedPage,
   MarkChatResponse,
   OwnedCreatedPage,
 } from '../api/createdPages';
@@ -25,6 +26,7 @@ import {
   CheckCircle2,
   ExternalLink,
   FileEdit,
+  Hammer,
   Loader2,
   MessageSquare,
   Monitor,
@@ -198,11 +200,39 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
   const [mobileView, setMobileView] = useState<'chat' | 'preview' | 'details'>('chat');
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [notice, setNotice] = useState<string | null>(null);
+  const [buildNote, setBuildNote] = useState<string | null>(null);
 
   const { data: page, isLoading, isError } = useQuery({
     queryKey: ['owned-page', pageId],
     queryFn: () => getCreatedPageForEdit(pageId as string),
     enabled: !!pageId,
+    // While Mark is building, check back every few seconds; stops by itself once it is Ready or Failed.
+    refetchInterval: (query) => (query.state.data?.buildStatus === 'Building' ? 3000 : false),
+  });
+
+  // Say so when a build finishes (the page changes under the builder's eyes, so a nudge helps).
+  const previousBuildStatus = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const status = page?.buildStatus;
+    if (previousBuildStatus.current === 'Building' && status === 'Ready') {
+      setNotice('Your page is ready');
+      setStageTab('preview');
+      window.setTimeout(() => setNotice(null), 4000);
+    }
+    previousBuildStatus.current = status;
+  }, [page?.buildStatus]);
+
+  const buildMutation = useMutation({
+    mutationFn: () => buildCreatedPage(pageId as string),
+    onSuccess: () => {
+      setBuildNote(null);
+      queryClient.setQueryData<OwnedCreatedPage>(['owned-page', pageId], (prev) =>
+        prev ? { ...prev, buildStatus: 'Building', buildError: null } : prev
+      );
+      queryClient.invalidateQueries({ queryKey: ['owned-page', pageId] });
+      showStage('preview');
+    },
+    onError: (err: any) => setBuildNote(err?.detail || 'Could not start the build. Try again.'),
   });
 
   const saveMutation = useMutation({
@@ -229,9 +259,19 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
       status: 'Draft',
       slug: '',
       viewCount: 0,
+      buildError: null,
+      builtHtml: null,
+      builtAt: null,
       ...(prev ?? {}),
       ...snapshot,
     }));
+
+    // Mark may have just started a build: refetch now so the studio notices and starts polling.
+    if (snapshot.buildStatus === 'Building') {
+      queryClient.invalidateQueries({ queryKey: ['owned-page', newId] });
+      setStageTab('preview');
+      setMobileView('preview');
+    }
 
     if (!pageId) {
       // First reply: the page now exists. Fetch the server's copy (it knows the slug and status),
@@ -257,6 +297,8 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
         deliveryMode: page.deliveryMode,
         deliveryUrl: page.deliveryUrl,
         coverImageUrl: page.coverImageUrl,
+        buildStatus: page.buildStatus,
+        hasBuiltPage: !!page.builtHtml,
       }
     : null;
 
@@ -272,8 +314,10 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
     );
   }
 
-  const canPublish = !!page && page.deliveryUrl.trim().length > 0;
+  const canPublish = !!page && (page.deliveryUrl.trim().length > 0 || !!page.builtHtml);
   const isPublished = page?.status === 'Published';
+  const isBuilding = page?.buildStatus === 'Building';
+  const hasContentToBuildFrom = !!page && (page.shortDescription.trim().length > 0 || page.detailedDescription.trim().length > 0);
 
   return (
     <div className="studio" data-view={mobileView}>
@@ -298,7 +342,31 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
               View live <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           )}
-          {page && !canPublish && !isPublished && <span className="studio__hint">Add a link to publish</span>}
+          {buildNote && (
+            <span className="studio__hint" role="alert">
+              {buildNote}
+            </span>
+          )}
+          {page && !canPublish && !isPublished && <span className="studio__hint">Add a link or build a page to publish</span>}
+          {page && (
+            <button
+              type="button"
+              className="btn-secondary btn-secondary--small"
+              onClick={() => buildMutation.mutate()}
+              disabled={isBuilding || buildMutation.isPending || !hasContentToBuildFrom}
+              title={hasContentToBuildFrom ? 'Mark builds a web page from your details' : 'Tell Mark about your project first'}
+            >
+              {isBuilding || buildMutation.isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Building…
+                </>
+              ) : (
+                <>
+                  <Hammer className="w-3.5 h-3.5" aria-hidden="true" /> {page.builtHtml ? 'Rebuild' : 'Build with Mark'}
+                </>
+              )}
+            </button>
+          )}
           <button
             type="button"
             className="btn-primary btn-primary--small"
