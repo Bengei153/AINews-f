@@ -51,7 +51,7 @@ const FIELD_LABELS: [keyof PageSnapshot, string][] = [
 ];
 
 const describeChanges = (before: PageSnapshot | null, after: PageSnapshot): string[] => {
-  const started = after.buildStatus === 'Building' && before?.buildStatus !== 'Building' ? ['Started building your page'] : [];
+  const started = after.buildStatus === 'Building' && before?.buildStatus !== 'Building' ? ['Started working on your page'] : [];
   if (!before) return ['Created your page draft', ...started];
   const changed = FIELD_LABELS.filter(([key]) => before[key] !== after[key]).map(([, label]) => label);
   return [...(changed.length ? [`Updated ${changed.join(', ')}`] : []), ...started];

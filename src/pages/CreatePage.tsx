@@ -12,6 +12,7 @@ import {
   updateCreatedPage,
   publishCreatedPage,
   buildCreatedPage,
+  undoBuildCreatedPage,
   MarkChatResponse,
   OwnedCreatedPage,
 } from '../api/createdPages';
@@ -28,6 +29,7 @@ import {
   FileEdit,
   Hammer,
   Loader2,
+  Undo2,
   MessageSquare,
   Monitor,
   Smartphone,
@@ -222,6 +224,15 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
     previousBuildStatus.current = status;
   }, [page?.buildStatus]);
 
+  const undoMutation = useMutation({
+    mutationFn: () => undoBuildCreatedPage(pageId as string),
+    onSuccess: () => {
+      setBuildNote(null);
+      queryClient.invalidateQueries({ queryKey: ['owned-page', pageId] });
+    },
+    onError: (err: any) => setBuildNote(err?.detail || 'Could not undo that.'),
+  });
+
   const buildMutation = useMutation({
     mutationFn: () => buildCreatedPage(pageId as string),
     onSuccess: () => {
@@ -262,6 +273,7 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
       buildError: null,
       builtHtml: null,
       builtAt: null,
+      canUndoBuild: false,
       ...(prev ?? {}),
       ...snapshot,
     }));
@@ -348,6 +360,17 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
             </span>
           )}
           {page && !canPublish && !isPublished && <span className="studio__hint">Add a link or build a page to publish</span>}
+          {page?.canUndoBuild && !isBuilding && (
+            <button
+              type="button"
+              className="btn-secondary btn-secondary--small"
+              onClick={() => undoMutation.mutate()}
+              disabled={undoMutation.isPending}
+              title="Go back to how the page was before Mark's last change (press again to bring it back)"
+            >
+              <Undo2 className="w-3.5 h-3.5" aria-hidden="true" /> Undo last change
+            </button>
+          )}
           {page && (
             <button
               type="button"

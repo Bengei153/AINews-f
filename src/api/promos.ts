@@ -21,6 +21,8 @@ export interface Promo {
   seatsLeft: number;
   state: PromoState;
   isPaused: boolean;
+  /** null = a free-days promo; a number = that % off one month of Premium at checkout. */
+  discountPercent: number | null;
 }
 
 export interface PromoRedemption {
@@ -28,6 +30,8 @@ export interface PromoRedemption {
   fullName: string;
   redeemedAt: string;
   grantedDays: number;
+  /** 'Redeemed' (free days) | 'Paid' | 'Waiting for payment' | 'Seat released' */
+  status: string;
 }
 
 export interface CreatePromoPayload {
@@ -38,6 +42,7 @@ export interface CreatePromoPayload {
   startsAt: string; // ISO
   endsAt: string; // ISO
   maxRedemptions: number;
+  discountPercent?: number | null; // set = checkout-discount promo (grantDays is then ignored)
 }
 
 export interface UpdatePromoPayload {
@@ -52,6 +57,11 @@ export interface RedeemPromoResult {
   grantedDays: number;
   premiumExpiresAt: string | null;
   message: string;
+  /** Set for a discount promo: send the person here to pay. Nothing is granted until they pay. */
+  checkoutUrl?: string | null;
+  discountPercent?: number | null;
+  amount?: number | null;
+  currency?: string | null;
 }
 
 const demoUnsupported = async (): Promise<never> => {

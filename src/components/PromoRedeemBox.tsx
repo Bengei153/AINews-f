@@ -22,6 +22,12 @@ export const PromoRedeemBox: React.FC = () => {
     onSuccess: (result) => {
       setMessage({ kind: 'ok', text: result.message });
       setCode('');
+      if (result.checkoutUrl) {
+        // A discount code: nothing is granted yet — the person pays the discounted price, and Premium is added
+        // when the payment is confirmed (the same flow as a normal checkout).
+        window.location.assign(result.checkoutUrl);
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ['premium-status'] });
     },
     onError: (err: any) => setMessage({ kind: 'error', text: err?.detail || 'Could not use that code. Try again.' }),

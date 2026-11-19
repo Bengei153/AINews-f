@@ -63,6 +63,8 @@ export interface OwnedCreatedPage {
   /** The page Mark built. Untrusted AI-written code: only ever show it inside <BuiltPageFrame>. */
   builtHtml: string | null;
   builtAt: string | null;
+  /** True when there is an earlier version to go back to (Mark's last change can be undone). */
+  canUndoBuild: boolean;
 }
 
 export interface UpdatePagePayload {
@@ -182,4 +184,13 @@ export const buildCreatedPage = async (pageId: string, instruction?: string): Pr
     throw new Error('Building pages is not simulated in demo mode.');
   }
   await apiClient.post(`/created-pages/${pageId}/build`, { instruction: instruction?.trim() || null });
+};
+
+// Puts the page back to how it was before Mark's last build or change. Instant, no AI call. Press again to bring the change back.
+export const undoBuildCreatedPage = async (pageId: string): Promise<void> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    throw new Error('Undo is not simulated in demo mode.');
+  }
+  await apiClient.post(`/created-pages/${pageId}/build/undo`);
 };

@@ -37,6 +37,8 @@ const defaultStart = (): string => toLocalInput(new Date().toISOString());
 const defaultEnd = (): string => toLocalInput(new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString());
 
 interface PromoFormValues {
+  kind: 'days' | 'discount';
+  discountPercent: number;
   code: string;
   name: string;
   description: string;
@@ -47,6 +49,8 @@ interface PromoFormValues {
 }
 
 const emptyForm = (): PromoFormValues => ({
+  kind: 'days',
+  discountPercent: 50,
   code: '',
   name: '',
   description: '',
@@ -78,6 +82,7 @@ export const PromoAdminPanel: React.FC<PromoAdminPanelProps> = ({ onNotify }) =>
         startsAt: fromLocalInput(form.startsAt),
         endsAt: fromLocalInput(form.endsAt),
         maxRedemptions: form.maxRedemptions,
+        discountPercent: form.kind === 'discount' ? form.discountPercent : null,
       }),
     onSuccess: (promo) => {
       refresh();
@@ -197,7 +202,10 @@ export const PromoAdminPanel: React.FC<PromoAdminPanelProps> = ({ onNotify }) =>
                 {promo.description && <p className="promo-card__desc">{promo.description}</p>}
 
                 <p className="promo-card__facts">
-                  {promo.grantDays} days of Premium · {formatWhen(promo.startsAt)} → {formatWhen(promo.endsAt)}
+                  {promo.discountPercent
+                    ? `${promo.discountPercent}% off one month of Premium (one payment, no auto-renew)`
+                    : `${promo.grantDays} days of Premium, free`}{' '}
+                  · {formatWhen(promo.startsAt)} → {formatWhen(promo.endsAt)}
                 </p>
 
                 <div className="promo-card__seats">
@@ -211,7 +219,7 @@ export const PromoAdminPanel: React.FC<PromoAdminPanelProps> = ({ onNotify }) =>
                     <span style={{ width: `${Math.min(100, (promo.redemptionCount / promo.maxRedemptions) * 100)}%` }} />
                   </div>
                   <span className="promo-card__seat-text">
-                    {promo.redemptionCount} of {promo.maxRedemptions} used · {promo.seatsLeft} left
+                    {promo.redemptionCount} of {promo.maxRedemptions} {promo.discountPercent ? 'taken' : 'used'} · {promo.seatsLeft} left
                   </span>
                 </div>
 
@@ -258,6 +266,26 @@ const PromoFields: React.FC<PromoFieldsProps> = ({ values, onChange, showCodeAnd
 
   return (
     <div className="promo-fields">
+      {showCodeAndDays && (
+        <div className="promo-fields__item promo-fields__item--wide">
+          <span>What does the code give?</span>
+          <div className="promo-fields__choice" role="radiogroup" aria-label="Promo type">
+            <button type="button" role="radio" aria-checked={values.kind === 'days'} className={values.kind === 'days' ? 'is-active' : ''} onClick={() => set('kind', 'days')}>
+              Free Premium days
+            </button>
+            <button type="button" role="radio" aria-checked={values.kind === 'discount'} className={values.kind === 'discount' ? 'is-active' : ''} onClick={() => set('kind', 'discount')}>
+              Discount at checkout
+            </button>
+          </div>
+          {values.kind === 'discount' && (
+            <small>
+              The person pays the normal price minus the discount, once, for one month of Premium. It does not renew by
+              itself afterwards. A seat is held for 2 hours while they pay.
+            </small>
+          )}
+        </div>
+      )}
+
       <label className="promo-fields__item">
         <span>Name (only you see this)</span>
         <input type="text" value={values.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. Launch week" required />
@@ -270,10 +298,17 @@ const PromoFields: React.FC<PromoFieldsProps> = ({ values, onChange, showCodeAnd
         </label>
       )}
 
-      {showCodeAndDays && (
+      {showCodeAndDays && values.kind === 'days' && (
         <label className="promo-fields__item">
           <span>Days of Premium it gives</span>
           <input type="number" min={1} max={365} value={values.grantDays} onChange={(e) => set('grantDays', Number(e.target.value))} required />
+        </label>
+      )}
+
+      {showCodeAndDays && values.kind === 'discount' && (
+        <label className="promo-fields__item">
+          <span>Percent off (1–95)</span>
+          <input type="number" min={1} max={95} value={values.discountPercent} onChange={(e) => set('discountPercent', Number(e.target.value))} required />
         </label>
       )}
 
@@ -311,6 +346,8 @@ interface EditPromoCardProps {
 // already accepted — so editing covers the name, the dates and the number of spots.
 const EditPromoCard: React.FC<EditPromoCardProps> = ({ promo, isSaving, onCancel, onSave }) => {
   const [values, setValues] = useState<PromoFormValues>({
+    kind: promo.discountPercent ? 'discount' : 'days',
+    discountPercent: promo.discountPercent ?? 50,
     code: promo.code,
     name: promo.name,
     description: promo.description,
@@ -329,7 +366,9 @@ const EditPromoCard: React.FC<EditPromoCardProps> = ({ promo, isSaving, onCancel
       }}
     >
       <p className="promo-card__facts">
-        Editing <strong>{promo.code}</strong> · {promo.grantDays} days of Premium (fixed) · {promo.redemptionCount} already used
+        Editing <strong>{promo.code}</strong> ·{' '}
+        {promo.discountPercent ? `${promo.discountPercent}% off (fixed)` : `${promo.grantDays} days of Premium (fixed)`} ·{' '}
+        {promo.redemptionCount} already {promo.discountPercent ? 'taken' : 'used'}
       </p>
       <PromoFields values={values} onChange={setValues} />
       <div className="promo-admin__actions">
@@ -359,6 +398,7 @@ const Redeemers: React.FC<{ promoId: string }> = ({ promoId }) => {
       {data.map((r, i) => (
         <li key={`${r.email}-${i}`}>
           <span>{r.fullName ? `${r.fullName} · ${r.email}` : r.email}</span>
+          <span className={`promo-card__status promo-card__status--${r.status.toLowerCase().replace(/\s+/g, '-')}`}>{r.status}</span>
           <time dateTime={r.redeemedAt}>{formatWhen(r.redeemedAt)}</time>
         </li>
       ))}
