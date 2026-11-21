@@ -18,7 +18,11 @@ export const getCreatedPages = async (category?: string): Promise<CreatedPageCar
 };
 
 /** The public project detail, plus whether the signed-in viewer is the one who made it (so the page can offer Edit / Unpublish / Delete). */
-export type CreatedPageDetailForViewer = CreatedPageDetail & { isOwner?: boolean };
+export type CreatedPageDetailForViewer = CreatedPageDetail & {
+  isOwner?: boolean;
+  /** Short address of the page Mark built, e.g. "pelz-foods-k3f9x2", served at /api/pelz-foods-k3f9x2. Null when there is no built page. */
+  siteAddress?: string | null;
+};
 
 export const getCreatedPageBySlug = async (slug: string): Promise<CreatedPageDetailForViewer> => {
   if (isDemoMode()) {

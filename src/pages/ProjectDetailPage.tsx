@@ -166,7 +166,11 @@ export const ProjectDetailPage: React.FC = () => {
           <BuiltPageFrame html={page.builtHtml} title={page.title} />
           <a
             className="built-page__open"
-            href={`${VITE_API_BASE_URL.replace(/\/$/, '')}/created-pages/${page.slug}/site`}
+            href={
+              page.siteAddress
+                ? `${VITE_API_BASE_URL.replace(/\/$/, '')}/${page.siteAddress}`
+                : `${VITE_API_BASE_URL.replace(/\/$/, '')}/created-pages/${page.slug}/site`
+            }
             target="_blank"
             rel="noopener noreferrer"
           >
