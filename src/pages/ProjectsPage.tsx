@@ -7,11 +7,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCreatedPages } from '../api/createdPages';
+import { useAuth } from '../store/authStore';
 import { CreatedPageCard } from '../components/CreatedPageCard';
-import { Hammer, AlertCircle, Sparkles } from 'lucide-react';
+import { Hammer, AlertCircle, Sparkles, FolderOpen } from 'lucide-react';
 
 export const ProjectsPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('');
+  const { user } = useAuth();
 
   const { data: pages, isLoading } = useQuery({
     queryKey: ['created-pages'],
@@ -41,13 +43,24 @@ export const ProjectsPage: React.FC = () => {
             Real things members made — download them, open the link, or connect your own backend to try them live.
           </p>
         </div>
-        <Link
-          to="/create"
-          className="bg-stone-900 hover:bg-stone-800 text-white font-bold py-2.5 px-5 rounded-lg text-xs shadow-md transition-colors inline-flex items-center gap-1.5 whitespace-nowrap"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          Build your own
-        </Link>
+        <div className="flex items-center gap-2 flex-wrap">
+          {user && (
+            <Link
+              to="/my-pages"
+              className="bg-white border border-stone-200 hover:border-stone-300 text-stone-800 font-bold py-2.5 px-5 rounded-lg text-xs transition-colors inline-flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              My projects
+            </Link>
+          )}
+          <Link
+            to="/create"
+            className="bg-stone-900 hover:bg-stone-800 text-white font-bold py-2.5 px-5 rounded-lg text-xs shadow-md transition-colors inline-flex items-center gap-1.5 whitespace-nowrap"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Build your own
+          </Link>
+        </div>
       </div>
 
       {categories.length > 0 && (

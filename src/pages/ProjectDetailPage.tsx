@@ -4,14 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
-import { getCreatedPageBySlug } from '../api/createdPages';
+import { getCreatedPageBySlug, deleteCreatedPage, unpublishCreatedPage } from '../api/createdPages';
 import { getAiTools } from '../api/aiTools';
 import { VITE_API_BASE_URL } from '../api/client';
 import { BuiltPageFrame } from '../components/BuiltPageFrame';
-import { ArrowLeft, Download, Link2, Plug, ExternalLink, AlertCircle, Loader2, PlayCircle } from 'lucide-react';
+import { ArrowLeft, Download, Link2, Plug, ExternalLink, AlertCircle, Loader2, PlayCircle, Pencil, Trash2, EyeOff } from 'lucide-react';
 
 const DELIVERY_META: Record<string, { label: string; icon: React.ReactNode }> = {
   Download: { label: 'Download', icon: <Download className="w-4 h-4" /> },
@@ -30,6 +30,31 @@ export const ProjectDetailPage: React.FC = () => {
   });
 
   const { data: aiTools } = useQuery({ queryKey: ['ai-tools'], queryFn: () => getAiTools(false) });
+
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [ownerError, setOwnerError] = useState<string | null>(null);
+
+  // Only offered to the person who made the project (the server says so via page.isOwner, and re-checks on every action).
+  const unpublishMutation = useMutation({
+    mutationFn: (id: string) => unpublishCreatedPage(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['created-pages'] });
+      queryClient.invalidateQueries({ queryKey: ['my-pages'] });
+      navigate('/my-pages');
+    },
+    onError: (err: any) => setOwnerError(err?.detail || 'Could not unpublish this project.'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteCreatedPage(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['created-pages'] });
+      queryClient.invalidateQueries({ queryKey: ['my-pages'] });
+      navigate('/my-pages');
+    },
+    onError: (err: any) => setOwnerError(err?.detail || 'Could not delete this project.'),
+  });
 
   const toolsUsed = React.useMemo(() => {
     if (!page) return [];
@@ -64,6 +89,47 @@ export const ProjectDetailPage: React.FC = () => {
         <ArrowLeft className="w-3.5 h-3.5" />
         Back to Projects
       </Link>
+
+      {page.isOwner && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap" role="region" aria-label="Your project">
+          <p className="text-xs font-bold text-emerald-900">This is your project.</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link
+              to={`/create/${page.id}`}
+              className="inline-flex items-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white font-bold py-2 px-3.5 rounded-lg text-xs transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit
+            </Link>
+            <button
+              type="button"
+              disabled={unpublishMutation.isPending}
+              onClick={() => {
+                if (window.confirm('Take this project off the public Projects page? Nothing is lost, and you can publish it again any time.')) {
+                  setOwnerError(null);
+                  unpublishMutation.mutate(page.id);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 bg-white border border-stone-200 hover:border-stone-300 text-stone-700 font-bold py-2 px-3.5 rounded-lg text-xs transition-colors cursor-pointer disabled:opacity-60"
+            >
+              <EyeOff className="w-3.5 h-3.5" /> Unpublish
+            </button>
+            <button
+              type="button"
+              disabled={deleteMutation.isPending}
+              onClick={() => {
+                if (window.confirm(`Delete "${page.title}" for good? It disappears from the site and this can't be undone.`)) {
+                  setOwnerError(null);
+                  deleteMutation.mutate(page.id);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 bg-white border border-red-200 hover:bg-red-50 text-red-600 font-bold py-2 px-3.5 rounded-lg text-xs transition-colors cursor-pointer disabled:opacity-60"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Delete
+            </button>
+          </div>
+          {ownerError && <p className="w-full text-xs font-bold text-red-600" role="alert">{ownerError}</p>}
+        </div>
+      )}
 
       {page.coverImageUrl && (
         <div className="aspect-video w-full rounded-2xl overflow-hidden border border-stone-200">

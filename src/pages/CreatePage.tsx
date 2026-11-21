@@ -11,6 +11,7 @@ import {
   getCreatedPageForEdit,
   updateCreatedPage,
   publishCreatedPage,
+  unpublishCreatedPage,
   buildCreatedPage,
   undoBuildCreatedPage,
   MarkChatResponse,
@@ -263,6 +264,23 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
     },
   });
 
+  const unpublishMutation = useMutation({
+    mutationFn: () => unpublishCreatedPage(pageId as string),
+    onSuccess: () => {
+      setBuildNote(null);
+      queryClient.invalidateQueries({ queryKey: ['owned-page', pageId] });
+      queryClient.invalidateQueries({ queryKey: ['my-pages'] });
+      queryClient.invalidateQueries({ queryKey: ['created-pages'] });
+    },
+    onError: (err: any) => setBuildNote(err?.detail || 'Could not unpublish. Try again.'),
+  });
+
+  const handleUnpublish = () => {
+    if (window.confirm('Take this project off the public Projects page? Nothing is lost, and you can publish it again any time.')) {
+      unpublishMutation.mutate();
+    }
+  };
+
   // Mark's replies carry a full snapshot already, so it goes straight into the query cache rather
   // than being refetched — the preview and the Details form reflect the change at once.
   const handleMarkUpdate = (newId: string, snapshot: PageSnapshot) => {
@@ -390,14 +408,28 @@ const StudioWorkspace: React.FC<StudioWorkspaceProps> = ({ pageId, initialPrompt
               )}
             </button>
           )}
-          <button
-            type="button"
-            className="btn-primary btn-primary--small"
-            onClick={() => publishMutation.mutate()}
-            disabled={!canPublish || publishMutation.isPending || isPublished}
-          >
-            {isPublished ? 'Published' : publishMutation.isPending ? 'Publishing…' : 'Publish'}
-          </button>
+          {isPublished ? (
+            <>
+              <span className="studio__hint">Changes go live as soon as they save</span>
+              <button
+                type="button"
+                className="btn-secondary btn-secondary--small"
+                onClick={handleUnpublish}
+                disabled={unpublishMutation.isPending}
+              >
+                {unpublishMutation.isPending ? 'Unpublishing…' : 'Unpublish'}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn-primary btn-primary--small"
+              onClick={() => publishMutation.mutate()}
+              disabled={!canPublish || publishMutation.isPending}
+            >
+              {publishMutation.isPending ? 'Publishing…' : 'Publish'}
+            </button>
+          )}
         </div>
       </header>
 

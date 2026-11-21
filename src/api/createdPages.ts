@@ -17,12 +17,15 @@ export const getCreatedPages = async (category?: string): Promise<CreatedPageCar
   return response.data;
 };
 
-export const getCreatedPageBySlug = async (slug: string): Promise<CreatedPageDetail> => {
+/** The public project detail, plus whether the signed-in viewer is the one who made it (so the page can offer Edit / Unpublish / Delete). */
+export type CreatedPageDetailForViewer = CreatedPageDetail & { isOwner?: boolean };
+
+export const getCreatedPageBySlug = async (slug: string): Promise<CreatedPageDetailForViewer> => {
   if (isDemoMode()) {
     await simulateNetworkDelay();
     throw new Error('Page not found.');
   }
-  const response = await apiClient.get<CreatedPageDetail>(`/created-pages/${slug}`);
+  const response = await apiClient.get<CreatedPageDetailForViewer>(`/created-pages/${slug}`);
   return response.data;
 };
 
@@ -193,4 +196,14 @@ export const undoBuildCreatedPage = async (pageId: string): Promise<void> => {
     throw new Error('Undo is not simulated in demo mode.');
   }
   await apiClient.post(`/created-pages/${pageId}/build/undo`);
+};
+
+// Takes the owner's published page back to a draft (it leaves the public Projects page, nothing is lost).
+// Not Premium-gated: a member whose Premium has ended can still take their own page down.
+export const unpublishCreatedPage = async (pageId: string): Promise<void> => {
+  if (isDemoMode()) {
+    await simulateNetworkDelay();
+    return;
+  }
+  await apiClient.post(`/created-pages/${pageId}/unpublish`);
 };
