@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserProfile, BookmarkItem } from '../types/api';
-import { getStoredUser, clearTokens, isDemoMode } from '../api/client';
+import { getStoredUser, getRefreshToken, clearTokens } from '../api/client';
 import { login as apiLogin, register as apiRegister } from '../api/auth';
 import { getMe, updateMeInterests, getBookmarks, toggleBookmark as apiToggleBookmark } from '../api/me';
 
@@ -30,37 +30,56 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Initial user session hydration on boot
+  // Restore the session on boot. A returning visitor should look signed in straight away and STAY signed in:
+  // the only thing that ends a session is the server saying so (the API client clears the tokens and fires
+  // 'auth-logout-redirect' when that happens). A slow or unreachable server never does — it just means the
+  // fresh profile arrives a little later.
   useEffect(() => {
-    const hydrate = async () => {
-      const stored = getStoredUser();
-      if (stored && stored.id) {
+    let cancelled = false;
+    let retryTimer: number | undefined;
+
+    const loadProfile = async (attempt: number) => {
+      try {
+        const profile = await getMe();
+        if (cancelled) return;
+        setUser(profile);
         try {
-          // Attempt to fetch fresh profile from API
-          const profile = await getMe();
-          setUser(profile);
-          
-          // Fetch user's bookmarks
           const bms = await getBookmarks();
-          setBookmarks(bms);
-        } catch (err) {
-          console.warn('Failed to restore active session:', err);
-          // Fall back to stored info in localStorage to keep offline resilient
-          if (isDemoMode()) {
-            setUser({
-              id: stored.id,
-              email: stored.email,
-              fullName: stored.fullName,
-              role: stored.role,
-              interests: stored.interests || [],
-            });
-          } else {
-            clearTokens();
-            setUser(null);
-          }
+          if (!cancelled) setBookmarks(bms);
+        } catch {
+          // Bookmarks are not essential to being signed in.
+        }
+      } catch (err) {
+        if (cancelled) return;
+        if (!getRefreshToken()) {
+          // The server ended the session (tokens already cleared by the API client).
+          setUser(null);
+          return;
+        }
+        // A connection problem (e.g. the server waking up): stay signed in and try again shortly.
+        console.warn('Could not refresh the profile yet; will retry:', err);
+        if (attempt < 6) {
+          retryTimer = window.setTimeout(() => loadProfile(attempt + 1), Math.min(5000 * (attempt + 1), 30000));
         }
       }
-      setIsLoading(false);
+    };
+
+    const hydrate = () => {
+      const stored = getStoredUser();
+      if (stored && stored.id && getRefreshToken()) {
+        // What we saved at sign-in is enough to show the person as signed in immediately.
+        setUser({
+          id: stored.id,
+          email: stored.email,
+          fullName: stored.fullName,
+          role: stored.role,
+          interests: stored.interests || [],
+        });
+        setIsLoading(false);
+        loadProfile(0);
+      } else {
+        setIsLoading(false);
+      }
     };
 
     hydrate();
@@ -72,9 +91,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setBookmarks([]);
     };
 
+    // Signing in or out in another tab is reflected here too.
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== 'aibrief_refresh_token') return;
+      if (event.newValue === null) {
+        setUser(null);
+        setBookmarks([]);
+      } else if (event.oldValue === null) {
+        hydrate();
+      }
+    };
+
     window.addEventListener('auth-logout-redirect', handleLogoutEvent);
+    window.addEventListener('storage', handleStorage);
     return () => {
+      cancelled = true;
+      if (retryTimer) window.clearTimeout(retryTimer);
       window.removeEventListener('auth-logout-redirect', handleLogoutEvent);
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 

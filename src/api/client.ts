@@ -64,18 +64,93 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Flag to prevent infinite refresh loops
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+// ---- Keeping people signed in ------------------------------------------------------------------------
+//
+// The access token is short-lived (30 minutes); the refresh token lasts for weeks and is swapped for a new
+// access token silently. Both live in localStorage, so a person stays signed in after closing the tab or the
+// browser. The rules below exist so that ONLY the server saying "this session is over" ever signs someone out:
+//
+//  - A refresh that fails because the server is asleep (a free-tier host waking up takes about a minute),
+//    unreachable or erroring is retried, and if it still can't be done the session is KEPT — the request
+//    just fails and the person tries again, still signed in.
+//  - Everything waiting on an expired token shares ONE refresh and is then retried — including the request
+//    that started it. (Before, that request subscribed to "refresh finished" only after it had already
+//    finished, so it waited forever: on coming back after 30 minutes the first call, loading the profile,
+//    hung or failed and the person looked signed out.)
+//  - The server rotates refresh tokens (each is single-use). If another tab already used ours, we pick up the
+//    new tokens that tab saved instead of treating the rejection as a sign-out.
 
-const subscribeTokenRefresh = (cb: (token: string) => void) => {
-  refreshSubscribers.push(cb);
+const REFRESH_TIMEOUT_MS = 90_000; // long enough for a sleeping host to wake up and answer
+const REFRESH_RETRY_DELAYS_MS = [3_000, 6_000]; // after a connection problem or a 5xx
+
+type RefreshFailure = { kind: 'ended' } | { kind: 'unreachable' };
+
+const signalSessionEnded = (): void => {
+  clearTokens();
+  window.dispatchEvent(new CustomEvent('auth-logout-redirect'));
 };
 
-const onRefreshed = (token: string) => {
-  refreshSubscribers.forEach((cb) => cb(token));
-  refreshSubscribers = [];
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Resolves with a fresh access token, or rejects with a RefreshFailure.
+const requestNewAccessToken = async (): Promise<string> => {
+  const usedRefreshToken = getRefreshToken();
+  if (!usedRefreshToken) {
+    signalSessionEnded();
+    throw { kind: 'ended' } as RefreshFailure;
+  }
+
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const response = await axios.post(
+        `${VITE_API_BASE_URL}/auth/refresh`,
+        { refreshToken: usedRefreshToken },
+        { timeout: REFRESH_TIMEOUT_MS }
+      );
+      const data = response.data;
+      saveTokens(data.accessToken, data.refreshToken, {
+        id: data.userId,
+        fullName: data.fullName,
+        email: data.email,
+        role: data.role,
+      });
+      return data.accessToken as string;
+    } catch (err: any) {
+      const status = err?.response?.status;
+
+      // The server answered, and said this refresh token is no good.
+      if (status === 400 || status === 401 || status === 403) {
+        // ...but another tab may have just exchanged it for a new pair, which is now in storage.
+        const currentRefresh = getRefreshToken();
+        const currentAccess = getAccessToken();
+        if (currentRefresh && currentRefresh !== usedRefreshToken && currentAccess) {
+          return currentAccess;
+        }
+        signalSessionEnded();
+        throw { kind: 'ended' } as RefreshFailure;
+      }
+
+      // No answer, a timeout, or a server error: NOT a reason to sign anyone out.
+      if (attempt >= REFRESH_RETRY_DELAYS_MS.length) {
+        throw { kind: 'unreachable' } as RefreshFailure;
+      }
+      await sleep(REFRESH_RETRY_DELAYS_MS[attempt]);
+    }
+  }
 };
+
+// One refresh at a time, however many requests found their token expired together.
+let refreshInFlight: Promise<string> | null = null;
+const refreshAccessToken = (): Promise<string> => {
+  if (!refreshInFlight) {
+    refreshInFlight = requestNewAccessToken().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+};
+
+const isAuthCall = (url?: string): boolean => !!url && /\/auth\/(login|register|refresh)/.test(url);
 
 // 1. Request Interceptor: Attach Authorization header automatically
 apiClient.interceptors.request.use(
@@ -89,72 +164,42 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 2 & 3 & 4. Response Interceptor: Catch 401 and attempt single silent refresh
+// 2. Response Interceptor: on 401, refresh the token once and retry the request that failed.
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
-    // Check if error is 401 Unauthorized, and we haven't retried this request yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // Avoid refreshing on refresh calls or if we are already refreshing
-      if (originalRequest.url?.includes('/auth/refresh')) {
-        clearTokens();
-        window.dispatchEvent(new CustomEvent('auth-logout-redirect'));
-        return Promise.reject(error);
-      }
-      
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthCall(originalRequest.url)) {
       originalRequest._retry = true;
-      
-      const refreshToken = getRefreshToken();
-      if (!refreshToken) {
-        clearTokens();
-        window.dispatchEvent(new CustomEvent('auth-logout-redirect'));
-        return Promise.reject(error);
-      }
-      
-      if (!isRefreshing) {
-        isRefreshing = true;
-        
-        try {
-          // Perform the silent refresh call
-          const response = await axios.post(`${VITE_API_BASE_URL}/auth/refresh`, { refreshToken });
-          const data = response.data;
-          
-          saveTokens(data.accessToken, data.refreshToken, {
-            id: data.userId,
-            fullName: data.fullName,
-            email: data.email,
-            role: data.role
-          });
-          
-          isRefreshing = false;
-          onRefreshed(data.accessToken);
-        } catch (refreshError) {
-          isRefreshing = false;
-          clearTokens();
-          window.dispatchEvent(new CustomEvent('auth-logout-redirect'));
-          return Promise.reject(refreshError);
+
+      try {
+        const newAccessToken = await refreshAccessToken();
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         }
+        return apiClient(originalRequest);
+      } catch (failure) {
+        const f = failure as RefreshFailure;
+        if (f?.kind === 'unreachable') {
+          // The session is intact (tokens kept) — we just couldn't reach the server this time.
+          const unreachable: ApiError = {
+            status: 503,
+            title: 'Server unavailable',
+            detail: 'Could not reach the server. Please try again in a moment.',
+          };
+          return Promise.reject(unreachable);
+        }
+        // Session ended: tokens were already cleared and the logout event fired. Fall through to the normal 401 error.
       }
-      
-      // Return a promise that resolves when the token refresh completes
-      return new Promise((resolve) => {
-        subscribeTokenRefresh((token) => {
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-          }
-          resolve(apiClient(originalRequest));
-        });
-      });
     }
-    
+
     // Parse backend standard exception middleware shape
     if (error.response?.data) {
       const serverError: ApiError = error.response.data;
       return Promise.reject(serverError);
     }
-    
+
     const standardError: ApiError = {
       status: error.response?.status || 500,
       title: 'Network Error',
