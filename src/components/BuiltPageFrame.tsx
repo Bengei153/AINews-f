@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import '../styles/mark-promos.css';
 
 interface BuiltPageFrameProps {
   /** The full HTML document Mark built. */

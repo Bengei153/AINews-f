@@ -6,7 +6,7 @@
 import { apiClient, isDemoMode, simulateNetworkDelay } from './client';
 
 // The backend serialises enums as their names (JsonStringEnumConverter).
-export type IngestionRunKind = 'NewsIngestion' | 'VideoIngestion' | 'CourseDiscovery';
+export type IngestionRunKind = 'NewsIngestion' | 'VideoIngestion' | 'CourseDiscovery' | 'AIToolDiscovery';
 export type IngestionTrigger = 'Scheduled' | 'Manual';
 export type IngestionRunStatus = 'Queued' | 'Running' | 'Succeeded' | 'CompletedWithErrors' | 'Failed' | 'Abandoned';
 export type IngestionStage = 'Setup' | 'Fetch' | 'Dedupe' | 'Generate' | 'Save' | 'Finish';

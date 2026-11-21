@@ -7,7 +7,10 @@ import { apiClient, isDemoMode, simulateNetworkDelay } from './client';
 import { AITool } from '../types/api';
 import { MockDatabase } from './mockDb';
 
-export const getAiTools = async (featuredOnly: boolean = false): Promise<AITool[]> => {
+/** A published tool as the Tools page receives it: the field it is sorted into is a slug like "writing" ("other" when not sorted yet), with its display label. */
+export type CategorizedAiTool = AITool & { category?: string; categoryLabel?: string };
+
+export const getAiTools = async (featuredOnly: boolean = false): Promise<CategorizedAiTool[]> => {
   if (isDemoMode()) {
     await simulateNetworkDelay();
     const tools = MockDatabase.getAiTools();
@@ -17,7 +20,7 @@ export const getAiTools = async (featuredOnly: boolean = false): Promise<AITool[
     return tools;
   }
 
-  const response = await apiClient.get<AITool[]>('/ai-tools', {
+  const response = await apiClient.get<CategorizedAiTool[]>('/ai-tools', {
     params: { featuredOnly },
   });
   return response.data;
