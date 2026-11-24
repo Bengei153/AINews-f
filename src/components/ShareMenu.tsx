@@ -81,8 +81,10 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
 
+  const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
   const handleCopyOrNativeShare = async () => {
-    if (navigator.share) {
+    if (canNativeShare) {
       try {
         await navigator.share({ title, text: summary, url: shareUrl });
         closeMenu();
@@ -166,8 +168,8 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({
             style={{ position: 'fixed', top: position.top, left: position.left }}
           >
             <button type="button" className="share-menu__item" onClick={handleCopyOrNativeShare} role="menuitem">
-              {copied ? <Check size={15} /> : navigator.share ? <Share2 size={15} /> : <Copy size={15} />}
-              {copied ? 'Copied!' : navigator.share ? 'Share…' : 'Copy link'}
+              {copied ? <Check size={15} /> : canNativeShare ? <Share2 size={15} /> : <Copy size={15} />}
+              {copied ? 'Copied!' : canNativeShare ? 'Share…' : 'Copy link'}
             </button>
 
             {imageUrl && (
