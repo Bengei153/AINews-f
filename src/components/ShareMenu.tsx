@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Share2, Copy, Check, BookMarked, Users } from 'lucide-react';
+import { Share2, Copy, Check, BookMarked, Users, Download } from 'lucide-react';
 import { getApiRootUrl } from '../api/client';
 import { useAuth } from '../store/authStore';
 import { SharedContentType } from '../types/api';
@@ -51,6 +51,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [followerModalOpen, setFollowerModalOpen] = useState(false);
+  const [imageState, setImageState] = useState<'idle' | 'loading' | 'failed'>('idle');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -58,6 +59,10 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({
   const position = useDropdownPosition(triggerRef, menuOpen, PANEL_WIDTH_PX, closeMenu);
 
   const shareUrl = `${getApiRootUrl()}/share/${SHARE_PATH_SEGMENT[contentType]}/${slug}`;
+
+  // Articles are shared as a generated preview image (title, summary, category, read time),
+  // drawn by the API at /share/articles/{slug}/image.png — the same idea as benchmark shares.
+  const imageUrl = contentType === 'Article' ? `${shareUrl}/image.png` : null;
 
   // Portaled panel is no longer a DOM descendant of the trigger, so outside-click
   // has to check both refs rather than a single wrapping element.
@@ -93,6 +98,28 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // clipboard blocked — nothing more we can do here
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (!imageUrl) return;
+    setImageState('loading');
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error(`Image request failed (${response.status})`);
+      const objectUrl = URL.createObjectURL(await response.blob());
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `${slug}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      setImageState('idle');
+      closeMenu();
+    } catch {
+      setImageState('failed');
+      setTimeout(() => setImageState('idle'), 2500);
     }
   };
 
@@ -142,6 +169,19 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({
               {copied ? <Check size={15} /> : navigator.share ? <Share2 size={15} /> : <Copy size={15} />}
               {copied ? 'Copied!' : navigator.share ? 'Share…' : 'Copy link'}
             </button>
+
+            {imageUrl && (
+              <button
+                type="button"
+                className="share-menu__item"
+                onClick={handleDownloadImage}
+                disabled={imageState === 'loading'}
+                role="menuitem"
+              >
+                <Download size={15} />
+                {imageState === 'loading' ? 'Preparing…' : imageState === 'failed' ? 'Image unavailable' : 'Download image'}
+              </button>
+            )}
 
             {user && (
               <button type="button" className="share-menu__item" onClick={handlePostToShowcase} role="menuitem">
