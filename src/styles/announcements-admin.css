@@ -1,0 +1,41 @@
+/* Announcements (admin). Reuses the .promo-admin__* and .promo-fields__* classes from mark-promos.css for the
+   card, form grid and buttons; only the pieces below are new. Same design tokens, so dark mode follows. */
+
+.ann-templates { display: flex; flex-wrap: wrap; gap: .45rem; }
+.ann-templates__label { width: 100%; margin: 0; color: var(--ink-muted); font-size: .68rem; font-weight: 800; }
+.ann-chip { display: inline-flex; align-items: center; gap: .35rem; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface-soft); color: var(--ink-body); padding: .35rem .8rem; font-size: .76rem; font-weight: 800; cursor: pointer; }
+.ann-chip:hover { border-color: var(--brand-green); color: var(--brand-green); }
+
+.promo-fields__item select,
+.promo-fields__item textarea { width: 100%; border: 1px solid var(--line-strong); border-radius: .6rem; background: var(--surface-page); color: var(--ink-strong); padding: .55rem .7rem; font: inherit; font-size: .85rem; font-weight: 600; }
+.promo-fields__item textarea { min-height: 5.5rem; resize: vertical; line-height: 1.5; }
+.promo-fields__item select:focus,
+.promo-fields__item textarea:focus { outline: 0; border-color: var(--brand-green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-green) 14%, transparent); }
+.ann-hint { color: var(--ink-muted); font-size: .68rem; font-weight: 600; line-height: 1.45; }
+
+.ann-checks { display: flex; flex-wrap: wrap; gap: 1.25rem; }
+.ann-check { display: inline-flex; align-items: center; gap: .5rem; color: var(--ink-body); font-size: .82rem; font-weight: 700; cursor: pointer; }
+.ann-check input { width: 1.05rem; height: 1.05rem; accent-color: var(--brand-green); }
+
+.ann-card { display: flex; flex-direction: column; gap: .6rem; padding: 1.1rem 1.25rem; border: 1px solid var(--line-soft); border-radius: 1rem; background: var(--surface-card); }
+.ann-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.ann-card__meta { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-bottom: .35rem; }
+.ann-card__title { margin: 0; color: var(--ink-strong); font-family: 'Playfair Display', Georgia, serif; font-size: 1.05rem; font-weight: 800; line-height: 1.3; }
+.ann-card__message { margin: 0; color: var(--ink-body); font-size: .84rem; font-weight: 500; line-height: 1.55; white-space: pre-wrap; }
+.ann-card__facts { margin: 0; color: var(--ink-muted); font-size: .74rem; font-weight: 600; line-height: 1.5; }
+.ann-card__actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+.ann-card__btn { display: inline-flex; align-items: center; gap: .3rem; border: 1px solid var(--line-strong); border-radius: .6rem; background: transparent; color: var(--ink-body); padding: .4rem .75rem; font-size: .74rem; font-weight: 800; cursor: pointer; }
+.ann-card__btn:hover { border-color: var(--brand-green); color: var(--brand-green); }
+.ann-card__btn--danger:hover { border-color: #b91c1c; color: #b91c1c; }
+.ann-card__btn:disabled { opacity: .55; cursor: default; }
+
+.ann-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: .18rem .6rem; font-size: .66rem; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.ann-pill--live { background: color-mix(in srgb, var(--brand-green) 16%, transparent); color: var(--brand-green); }
+.ann-pill--scheduled { background: #fef3c7; color: #92400e; }
+.ann-pill--ended, .ann-pill--off { background: var(--surface-soft); color: var(--ink-muted); }
+.ann-pill--kind { background: var(--surface-soft); color: var(--ink-body); }
+:root[data-theme='dark'] .ann-pill--scheduled { background: #3b2a0a; color: #fbbf24; }
+
+@media (max-width: 40rem) {
+  .ann-card__top { flex-direction: column; }
+}
